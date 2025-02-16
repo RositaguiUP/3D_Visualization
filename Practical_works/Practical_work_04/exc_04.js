@@ -26,6 +26,7 @@ function setLights() {
     scene.add(light1);
     scene.add(light2);
 }
+
 const whiteMtl = new THREE.MeshPhongMaterial({
     color: 0xFFFFFF,
     side: THREE.DoubleSide,
@@ -108,6 +109,9 @@ function buildArm(side, bodyHeight) {
     const handWidth = 3;
     const handHeight = 5;
     const handDepth = 2;
+    const fingerWidth = 1;
+    const fingerHeight = 2;
+    const fingerDepth = 0.4;
 
     const prearmPivot = new THREE.Object3D();
     if (side === "left") {
@@ -137,6 +141,16 @@ function buildArm(side, bodyHeight) {
     const hand = new THREE.BoxGeometry(handWidth, handHeight, handDepth);
     addPart(0, handHeight / 2, 0, hand, "hand", robot[side].wrist, side);
 
+    const fingeJoint1 = new THREE.Object3D();
+    addPivot(0, handHeight / 2, 0.5, fingeJoint1, "fingeJoint1", robot[side].hand, side);
+
+    const fingeJoint2 = new THREE.Object3D();
+    addPivot(0, handHeight / 2, -0.5, fingeJoint2, "fingeJoint2", robot[side].hand, side);
+    
+    const finger = new THREE.BoxGeometry(fingerWidth, fingerHeight, fingerDepth);
+    addPart(0, fingerHeight / 2, 0, finger, "finger1", robot[side].fingeJoint1, side);
+    addPart(0, fingerHeight / 2, 0, finger, "finger2", robot[side].fingeJoint2, side);
+
     if (side === "left") {
         robot[side].prearmPivot.rotation.x = Math.PI / 12;
     } else {
@@ -145,6 +159,9 @@ function buildArm(side, bodyHeight) {
     }
 
     robot[side].shoulder.rotation.x = Math.PI / 4;
+    robot[side].elbow.rotation.x = Math.PI / 4;
+
+    robot[side].elbow.rotation.x = Math.PI / 4;
     robot[side].elbow.rotation.x = Math.PI / 4;
 }
 
@@ -194,21 +211,114 @@ function rotateHand(side) {
     robot[side].hand.rotation.y = Math.sin(time) * Math.PI / 4 * orientation;
 }
 
+
+function rotatePart(part, isJoint, orientation, finishAngle) {
+    let axis = isJoint ? "x" : "y";
+    let angle = part.rotation[axis];
+
+    if (angle*orientation < finishAngle) {
+        part.rotation[axis] += time * orientation;
+        console.log(time);
+        return false;
+    }
+
+    return true;
+}
+
+
+function animArm(steps) {
+    let step = steps[currentStep];
+    
+    if (rotationDone == false) {
+        rotationDone = rotatePart(step.part, step.isJoint, step.orientation*orientChange, step.angle);
+    } else {
+        if (currentStep < steps.length - 1) {
+            currentStep += 1;
+        } else {
+            currentStep = 0;
+            //orientChange *= -1;
+        }
+        time = 0;
+        rotationDone = false;
+    }
+}
+
 setLights();
 marksGrid(150, 2);
 buildRobot();
 
+const stepsLeft = [
+    {
+        part: robot.left.prearm,
+        isJoint: false,
+        orientation: -1,
+        angle: Math.PI/4,
+    },
+    {
+        part: robot.left.shoulder,
+        isJoint: true,
+        orientation: -1,
+        angle: 0,
+    },
+    {
+        part: robot.left.elbow,
+        isJoint: true,
+        orientation: -1,
+        angle: Math.PI/4,
+    },
+    {
+        part: robot.left.wrist,
+        isJoint: true,
+        orientation: -1,
+        angle: Math.PI/4,
+    }
+];
+
+const stepsRight = [
+    {
+        part: robot.right.prearm,
+        isJoint: false,
+        orientation: -1,
+        angle: Math.PI/4,
+    },
+    {
+        part: robot.right.shoulder,
+        isJoint: true,
+        orientation: -1,
+        angle: Math.PI/4,
+    },
+    {
+        part: robot.right.elbow,
+        isJoint: true,
+        orientation: -1,
+        angle: Math.PI/4,
+    },
+    {
+        part: robot.right.wrist,
+        isJoint: true,
+        orientation: -1,
+        angle: Math.PI/4,
+    }
+];
+
+let currentStep = 0;
+let rotationDone =  false;
+let orientChange = 1; 
 let time = 0;
-let speed = 0.005;
+let speed = 0.00001;
 
 function animate() {
     time += speed;
     renderer.render(scene, camera);
     controls.update();
-    rotatePrearm("left");
-    rotatePrearm("right");
 
-    // rotateShoulder("left");
+    //animArm(stepsLeft);
+    //animArm(stepsRight);
+    
+    // rotatePrearm("left");
+    // rotatePrearm("right");
+
+    //rotateShoulder("left");
     // rotateShoulder("right");
 
     // rotateArm("left");
@@ -218,11 +328,12 @@ function animate() {
     //rotateElbow("right");
 
     // rotateForearm("left");
-    // rotateForearm("right");
+    //rotateForearm("right");
 
     // rotateWrist("left");
     // rotateWrist("right");
 
-    //rotateHand("left");
-    //rotateHand("right");
+    // rotateHand("left");
+    // rotateHand("right");
+
 }
