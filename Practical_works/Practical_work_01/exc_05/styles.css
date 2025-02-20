@@ -1,8 +1,7 @@
-
-html, body { 
+html,
+body {
   height: 100%;
   margin: 0;
-
 }
 
 #c {
@@ -11,9 +10,8 @@ html, body {
   display: block;
 }
 
-
 .mode {
-    position: absolute;
-    right: 1em;
-    top: 1em;
+  position: absolute;
+  right: 1em;
+  top: 1em;
 }
