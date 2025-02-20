@@ -9,37 +9,32 @@ import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 import { FlyControls } from 'three/addons/controls/FlyControls.js';
 
 function main() {
-
+    // ********************** Scene Setup **********************
 	const canvas = document.querySelector( '#c' );
 	const view1Elem = document.querySelector( '#view1' );
 	const view2Elem = document.querySelector( '#view2' );
 	const renderer = new THREE.WebGLRenderer( { antialias: true, canvas } );
     
+	const scene = new THREE.Scene();
+	scene.background = new THREE.Color( 'black' );
+    
+    
     const floorOffset = 10;
     
+    // Left camera and controls 
 	const size = 1;
-	const near = 0.1;
-	const far = 500;
-	const cameraOth = new THREE.OrthographicCamera( - size, size, size, - size, near, far );
+	const cameraOth = new THREE.OrthographicCamera(-size, size, size, -size, 0.1, 1000);
 	cameraOth.zoom = 0.005;
-	cameraOth.position.set( 0, 120, 260 );
+	cameraOth.position.set(0, 120, 260);
 	
-	const controls = new OrbitControls( cameraOth, view1Elem );
-	controls.target.set( 0, floorOffset, 0 );
-	controls.update();
-
-	const cameraPrsp = new THREE.PerspectiveCamera(
-		75, // fov
-		2, // aspect
-		0.1, // near
-		1000, // far
-	);
+	const leftCtrlOrbit = new OrbitControls( cameraOth, view1Elem );
+	leftCtrlOrbit.target.set( 0, floorOffset, 0 );
+	leftCtrlOrbit.update();
+    
+    // Right camera and controls 
+	const cameraPrsp = new THREE.PerspectiveCamera(75, 2, 0.1, 1000);
 	cameraPrsp.position.set( 0, 120, 260 );
 	cameraPrsp.lookAt( 0, floorOffset, 0 );
-
-    
-    
-    const clock = new THREE.Clock();
     
 	const ctrlOrbit = new OrbitControls( cameraPrsp, view2Elem );
 	ctrlOrbit.target.set( 0, floorOffset, 0 );
@@ -50,22 +45,28 @@ function main() {
 	ctrlFrst.lookSpeed = 0.1;
     ctrlFrst.activeLook = 0;
     
-    
 	const ctrlFly = new FlyControls(cameraPrsp, view2Elem);
     ctrlFly.movementSpeed = 100;
     ctrlFly.rollSpeed = Math.PI / 12;
     ctrlFly.dragToLook = true;
-
+    
     const ctrlTrck = new TrackballControls( cameraPrsp, view2Elem );
-
-    var controlsPrsp = ctrlTrck;
-
-
-
-	const scene = new THREE.Scene();
-	scene.background = new THREE.Color( 'black' );
-
-
+    
+    var controlsPrsp = ctrlOrbit;
+    
+    // ********************** Lightning Setup **********************
+    {
+        const color = 0xFFFFFF;
+        const intensity = 3;
+        const light1 = new THREE.DirectionalLight( color, intensity );
+        const light2 = new THREE.DirectionalLight( color, intensity );
+        light1.position.set( -1, 2, 4 );
+        light2.position.set( 1, -2, -4 );
+        scene.add( light1 );
+        scene.add( light2 );
+    }
+    
+    // ********************** Materials & Objects **********************
     const spread = 25;
     var objects = [];
 
@@ -343,7 +344,7 @@ function main() {
             }
             
             async function doit() {
-                const font = await loadFont('public/fonts/helvetiker_regular.typeface.json');  /* threejs.org: url */
+                const font = await loadFont('/Practical_work_01/public/fonts/helvetiker_regular.typeface.json');  /* threejs.org: url */
                 const geometry = new TextGeometry('three.js', {
                 font: font,
                 size: 3.0,
@@ -437,16 +438,14 @@ function main() {
         }
     }
 
-    function setLights() {
-        const color = 0xFFFFFF;
-        const intensity = 3;
-        const light1 = new THREE.DirectionalLight( color, intensity );
-        const light2 = new THREE.DirectionalLight( color, intensity );
-        light1.position.set( -1, 2, 4 );
-        light2.position.set( 1, -2, -4 );
-        scene.add( light1 );
-        scene.add( light2 );
-    }
+    marksGrid(150, 2);
+    addAllPrimitives(0, 1);
+    addAllPrimitives(-2, 0);
+    addAllPrimitives(2, 2);
+
+    // ********************** Animation **********************
+    const clock = new THREE.Clock();
+    const speedPrim = 0.003;
 
     function rotatePrimitives(speed) {
         for (let i = 0; i < objects.length; i++) {
@@ -454,13 +453,6 @@ function main() {
             objects[i].rotation.y += speed;
         }
     }
-
-    const speedPrim = 0.003;
-    setLights();
-    marksGrid(150, 2);
-    addAllPrimitives(0, 1);
-    addAllPrimitives(-2, 0);
-    addAllPrimitives(2, 2);
 
 	function resizeRendererToDisplaySize( renderer ) {
 
@@ -482,7 +474,7 @@ function main() {
 
 	}
 
-	function setScissorForElement( elem ) {
+	function setScissorForElement( elem ) { // From Three.js documentation
 
 		const canvasRect = canvas.getBoundingClientRect();
 		const elemRect = elem.getBoundingClientRect();
@@ -506,20 +498,63 @@ function main() {
 
 	}
 
+	function animate() {
+        rotatePrimitives(speedPrim);
 
+		resizeRendererToDisplaySize( renderer );
+		renderer.setScissorTest( true );
+
+		// render the original view (left)
+		{
+			const aspect = setScissorForElement( view1Elem );
+			// update the camera for this aspect
+			cameraOth.left = -aspect;
+			cameraOth.right = aspect;
+			cameraOth.updateProjectionMatrix();
+
+			scene.background.set( 0x000000 );
+			renderer.render( scene, cameraOth );
+		}
+
+		// render from the 2nd camera (right)
+		{
+			const aspect = setScissorForElement( view2Elem );
+			cameraPrsp.aspect = aspect;
+			cameraPrsp.updateProjectionMatrix();
+
+			scene.background.set( 0x000040 );
+			renderer.render( scene, cameraPrsp );
+		}
+
+        if (controlsPrsp === ctrlFrst || controlsPrsp === ctrlFly ) {
+            controlsPrsp.update( clock.getDelta() );
+        }  else if (controlsPrsp === ctrlOrbit || controlsPrsp == ctrlTrck) {
+            controlsPrsp.update();
+        }
+
+		requestAnimationFrame( animate );
+
+	}
+
+	requestAnimationFrame( animate );
+
+    // ********************** Event Listeners **********************
+    
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'p') {
-            controlsPrsp = ctrlFrst;
-            cameraPrsp.position.set( 0, 120, 260 );
-        } else if (event.key === 'o') {
+        if (event.key === '1') {
             controlsPrsp = ctrlOrbit;
             ctrlOrbit.target.set(0, floorOffset, 0);
             ctrlOrbit.update();
-        } else if (event.key === 'l') {
+        } else if (event.key === '2') {
+            controlsPrsp = ctrlFrst;
+            cameraPrsp.position.set( 0, 120, 260 );
+        } else if (event.key === '3') {
             controlsPrsp = ctrlFly;
-        } else if (event.key === 't') {
+        } else if (event.key === '4') {
             controlsPrsp = ctrlTrck;
         }
+
+        console.log(controlsPrsp);
     
         if (controlsPrsp === ctrlFrst && event.key === ' ') {
             controlsPrsp.activeLook = 1;
@@ -531,56 +566,6 @@ function main() {
             controlsPrsp.activeLook = 0;
         }
     });
-
-	function render() {
-
-		resizeRendererToDisplaySize( renderer );
-
-		// turn on the scissor
-		renderer.setScissorTest( true );
-
-		// render the original view
-		{
-
-			const aspect = setScissorForElement( view1Elem );
-
-			// update the camera for this aspect
-			cameraOth.left = - aspect;
-			cameraOth.right = aspect;
-			cameraOth.updateProjectionMatrix();
-
-			scene.background.set( 0x000000 );
-			renderer.render( scene, cameraOth );
-
-		}
-
-		// render from the 2nd camera
-		{
-
-			const aspect = setScissorForElement( view2Elem );
-
-			cameraPrsp.aspect = aspect;
-			cameraPrsp.updateProjectionMatrix();
-
-			scene.background.set( 0x000040 );
-			renderer.render( scene, cameraPrsp );
-
-		}
-
-        rotatePrimitives(speedPrim);
-
-        if (controlsPrsp === ctrlFrst || controlsPrsp === ctrlFly ) {
-            controlsPrsp.update( clock.getDelta() );
-        }  else if (controlsPrsp === ctrlOrbit || controlsPrsp == ctrlTrck) {
-            controlsPrsp.update();
-        }
-
-		requestAnimationFrame( render );
-
-	}
-
-	requestAnimationFrame( render );
-
 }
 
 main();
