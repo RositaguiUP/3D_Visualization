@@ -1,20 +1,31 @@
 import * as THREE from 'three';
+import {VRButton} from 'three/addons/webxr/VRButton.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
+const canvas = document.querySelector( '#c' );
+const renderer = new THREE.WebGLRenderer( { antialias: true, canvas } );
 renderer.setAnimationLoop(animate);
-document.body.appendChild(renderer.domElement);
-
 
 const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, 2, 0.1, 150);
+camera.position.set(0, 20, 50);
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 10, 0);
-camera.position.y = 20;
-camera.position.z = 50;
+const params = (new URL(document.location)).searchParams;
+const allowvr = params.get('allowvr') === 'true';
+if (allowvr) {
+  renderer.xr.enabled = true;
+  document.body.appendChild(VRButton.createButton(renderer));
+  document.querySelector('#vr').style.display = 'none';
+  camera.position.set(0, 20, 50);
+} else {
+  // no VR, add some controls
+  const controls = new OrbitControls(camera, canvas);
+  //controls.target.set(0, 10, 0);
+  controls.target.set(0, 1.6, -2);
+  controls.update();
+  document.querySelector('#nonvr').style.display = 'none';
+}
 
 function setLights() {
     const color = 0xFFFFFF;
@@ -171,44 +182,12 @@ function buildRobot() {
     const bodyDepth = 10;
 
     const body = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyDepth);
-    addPart(0, bodyHeight / 2, 0, body, "body", scene);
+    addPart(0, bodyHeight / 2, -20, body, "body", scene);
 
     buildArm("left", bodyHeight);
     buildArm("right", bodyHeight);
 
     robot.body.rotation.z = Math.PI / 4;
-}
-
-function rotatePrearm(side) {
-    let orientation = side === "left" ? 1 : -1;
-    robot[side].prearm.rotation.y = Math.sin(time) * Math.PI / 4 * orientation;
-}
-
-function rotateShoulder(side) {
-    robot[side].shoulder.rotation.x = (Math.sin(time) * Math.PI / 6) + Math.PI / 4;
-}
-
-function rotateArm(side) {
-    let orientation = side === "left" ? 1 : -1;
-    robot[side].arm.rotation.y = Math.sin(time) * Math.PI / 4 * orientation;
-}
-
-function rotateElbow(side) {
-    robot[side].elbow.rotation.x = (Math.sin(time) * Math.PI / 6) + Math.PI / 4;
-}
-
-function rotateForearm(side) {
-    let orientation = side === "left" ? 1 : -1;
-    robot[side].forearm.rotation.y = Math.sin(time) * Math.PI / 4 * orientation;
-}
-
-function rotateWrist(side) {
-    robot[side].wrist.rotation.x = (Math.sin(time) * Math.PI / 6) + Math.PI / 4;
-}
-
-function rotateHand(side) {
-    let orientation = side === "left" ? 1 : -1;
-    robot[side].hand.rotation.y = Math.sin(time) * Math.PI / 4 * orientation;
 }
 
 
@@ -305,14 +284,38 @@ let currentStep = 0;
 let rotationDone =  false;
 let orientChange = 1; 
 let time = 0;
-let speed = 0.00001;
+let speed = 0.0001;
+
+function resizeRendererToDisplaySize( renderer ) {
+
+    const canvas = renderer.domElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const needResize = canvas.width !== width || canvas.height !== height;
+    if ( needResize ) {
+
+        renderer.setSize( width, height, false );
+
+    }
+
+    return needResize;
+
+}
 
 function animate() {
     time += speed;
-    renderer.render(scene, camera);
-    controls.update();
 
-    //animArm(stepsLeft);
+    if ( resizeRendererToDisplaySize( renderer ) ) {
+
+        const canvas = renderer.domElement;
+        camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        camera.updateProjectionMatrix();
+
+    }
+
+    renderer.render(scene, camera);
+
+    animArm(stepsLeft);
     //animArm(stepsRight);
     
     // rotatePrearm("left");
