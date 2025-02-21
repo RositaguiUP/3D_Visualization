@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { RectAreaLightHelper } from "three/addons/helpers/RectAreaLightHelper.js";
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
 function main() {
   // ********************** Scene Setup **********************
@@ -20,7 +21,8 @@ function main() {
 
   // ********************** Lightning Setup **********************
   // RectAreaLightUniformsLib.init();
-  // {
+  
+  {
   // 	const color = 0xFFFFFF;
   // 	const intensity = 5;
   // 	const width = 1;
@@ -32,7 +34,7 @@ function main() {
 
   // 	const helper = new RectAreaLightHelper( light );
   // 	light.add( helper );
-  // }
+  }
 
   {
     const light = new THREE.PointLight(0xffffff, 10);
@@ -59,13 +61,18 @@ function main() {
     side: THREE.DoubleSide,
   });
 
+  const dynamicMtl = new THREE.MeshLambertMaterial({
+    color: 0x00ffff,
+    side: THREE.DoubleSide,
+  });
+
   const cornellBoxMtls = [
     new THREE.MeshLambertMaterial({ color: 0x00ff00, side: THREE.DoubleSide }), // Back face - Green
     new THREE.MeshLambertMaterial({ color: 0xff0000, side: THREE.DoubleSide }), // Front face - Red
     whiteMtl,
     whiteMtl,
     whiteMtl,
-    whiteMtl,
+    dynamicMtl,
   ];
 
   function addObject(x, y, z, geometry, parent, material) {
@@ -129,6 +136,25 @@ function main() {
   createRoom();
   createObjectsInTable();
 
+  // ********************** GUI **********************
+  class ColorGUIHelper {
+		constructor( object, prop ) {
+			this.object = object;
+			this.prop = prop;
+		}
+		get value() {
+			return `#${this.object[ this.prop ].getHexString()}`;
+		}
+		set value( hexString ) {
+			this.object[ this.prop ].set( hexString );
+		}
+	}
+
+	{
+		const gui = new GUI();
+		gui.addColor( new ColorGUIHelper( dynamicMtl, 'color' ), 'value' ).name( 'Wall color' );
+	}
+
   // ********************** Rendering **********************
   function resizeRendererToDisplaySize(renderer) {
     const canvas = renderer.domElement;
@@ -147,7 +173,7 @@ function main() {
       camera.aspect = canvas.clientWidth / canvas.clientHeight;
       camera.updateProjectionMatrix();
     }
-    
+
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   }
