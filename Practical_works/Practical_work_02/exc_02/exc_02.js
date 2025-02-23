@@ -19,7 +19,7 @@ function main() {
 
   // ********************** Lighting Setup **********************
   {
-    const light = new THREE.PointLight(0xffffff, 10);
+    const light = new THREE.PointLight(0xffffff, 6);
     light.position.set(0, 3.9, -2);
     scene.add(light);
   }

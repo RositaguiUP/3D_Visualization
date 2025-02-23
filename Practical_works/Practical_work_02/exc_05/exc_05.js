@@ -36,7 +36,7 @@ function main() {
 
   // Point
   const pointLight = new THREE.PointLight(0xffffff, 6);
-  pointLight.position.set(0, 3.8, -1);
+  pointLight.position.set(0, 3.9, -1);
   scene.add(pointLight);
 
   RectAreaLightUniformsLib.init();
@@ -229,7 +229,7 @@ function main() {
   const guiOptions = { adaptMaterials: true, visibleHelper: false, intensity: intensity };
 
   const gui = new GUI();
-  gui.add(guiOptions, "adaptMaterials").onChange(changeMaterials).name("Phsyical instead of Lambertian material");
+  gui.add(guiOptions, "adaptMaterials").onChange(changeMaterials).name("Physical instead of Lambertian material");
   gui.add(guiOptions, "visibleHelper").onChange(changeHelperVisibility);
   gui.add(guiOptions, "intensity", 0, 5, 0.01).onChange(changeIntensity);;
 

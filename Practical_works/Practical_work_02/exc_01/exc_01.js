@@ -19,38 +19,10 @@ function main() {
   controls.update();
 
   // ********************** Lighting Setup **********************
-  // RectAreaLightUniformsLib.init();
-  // {
-  // 	const color = 0xFFFFFF;
-  // 	const intensity = 5;
-  // 	const width = 1;
-  // 	const height = 1;
-  // 	const light = new THREE.RectAreaLight( color, intensity, width, height );
-  // 	light.position.set( 0, 3.9, -2 );
-  // 	light.rotation.x = THREE.MathUtils.degToRad( - 90 );
-  // 	scene.add( light );
-
-  // 	const helper = new RectAreaLightHelper( light );
-  // 	light.add( helper );
-  // }
-
   {
-    const light = new THREE.PointLight(0xffffff, 10);
+    const light = new THREE.PointLight(0xffffff, 6);
     light.position.set(0, 3.9, -2);
     scene.add(light);
-  }
-
-  {
-    // const color = 0xFFFFFF;
-    // const intensity = 1;
-    // const light = new THREE.DirectionalLight(color, intensity);
-    // light.position.set( 0, 3.9, 0 );
-    // //light.target.position.set(0, 0, 0);
-    // scene.add(light);
-    // //scene.add(light.target);
-
-    // const helper = new THREE.DirectionalLightHelper(light);
-    // scene.add(helper);
   }
 
   // ********************** Materials & Objects **********************

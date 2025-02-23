@@ -48,7 +48,7 @@ function main() {
   dirCamHelper.visible = false;
 
   // Point
-  const pointLight = new THREE.PointLight(0xffffff, 5);
+  const pointLight = new THREE.PointLight(0xffffff, 6);
   pointLight.position.set(0, 3.9, -2);
   scene.add(pointLight);
   pointLight.castShadow = true;
