@@ -6,6 +6,7 @@ function main() {
   // ********************** Scene Setup **********************
   const canvas = document.querySelector("#c");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.shadowMap.enabled = true;
 
   const scene = new THREE.Scene();
 
@@ -27,6 +28,13 @@ function main() {
   // Directional
   const dirLight = new THREE.DirectionalLight(0xffffff, 2);
   dirLight.position.set(0, 3.9, 0);
+  dirLight.castShadow = true;
+  dirLight.shadow.camera.near = 0.5;
+  dirLight.shadow.camera.far = 10;
+  dirLight.shadow.camera.right = 5;
+  dirLight.shadow.camera.left = -5;
+  dirLight.shadow.camera.top = 5;
+  dirLight.shadow.camera.bottom = -5;
   scene.add(dirLight);
   scene.add(dirLight.target);
   dirLight.visible = false;
@@ -35,19 +43,33 @@ function main() {
   scene.add(dirHelper);
   dirHelper.visible = false;
 
+  const dirCamHelper = new THREE.CameraHelper(dirLight.shadow.camera);
+  scene.add(dirCamHelper);
+  dirCamHelper.visible = false;
+
   // Point
   const pointLight = new THREE.PointLight(0xffffff, 5);
   pointLight.position.set(0, 3.9, -2);
   scene.add(pointLight);
+  pointLight.castShadow = true;
+  pointLight.shadow.camera.near = 0.5;
+  pointLight.shadow.camera.far = 10;
   pointLight.visible = false;
 
   const pointHelper = new THREE.PointLightHelper(pointLight);
   scene.add(pointHelper);
   pointHelper.visible = false;
 
+  const pointCamHelper = new THREE.CameraHelper(pointLight.shadow.camera);
+  scene.add(pointCamHelper);
+  pointCamHelper.visible = false;
+
   // Spot
   const spotLight = new THREE.SpotLight(0xffffff, 10);
   spotLight.position.set(0, 3.9, 0);
+  spotLight.castShadow = true;
+  spotLight.shadow.camera.near = 0.5;
+  spotLight.shadow.camera.far = 10;
   scene.add(spotLight);
   scene.add(spotLight.target);
   spotLight.visible = false;
@@ -55,6 +77,10 @@ function main() {
   const spotHelper = new THREE.SpotLightHelper(spotLight);
   scene.add(spotHelper);
   spotHelper.visible = false;
+
+  const spotCamHelper = new THREE.CameraHelper(spotLight.shadow.camera);
+  scene.add(spotCamHelper);
+  spotCamHelper.visible = false;
 
   // Hemisphere
   const skyColor = 0xb1e1ff;
@@ -65,22 +91,37 @@ function main() {
   hmsphrLight.visible = false;
 
   // ********************** Materials & Objects **********************
-  const whiteMtl = new THREE.MeshLambertMaterial({
+  const whiteMtlDbl = new THREE.MeshLambertMaterial({
     color: 0xffffff,
     side: THREE.DoubleSide,
+  });
+
+  const whiteMtl = new THREE.MeshLambertMaterial({
+    color: 0xffffff,
   });
 
   const cornellBoxMtls = [
     new THREE.MeshLambertMaterial({ color: 0x00ff00, side: THREE.DoubleSide }), // Back face - Green
     new THREE.MeshLambertMaterial({ color: 0xff0000, side: THREE.DoubleSide }), // Front face - Red
-    whiteMtl,
-    whiteMtl,
-    whiteMtl,
-    whiteMtl,
+    whiteMtlDbl,
+    whiteMtlDbl,
+    whiteMtlDbl,
+    whiteMtlDbl,
   ];
 
-  function addObject(x, y, z, geometry, parent, material) {
+  function addObject(
+    x,
+    y,
+    z,
+    geometry,
+    parent,
+    material,
+    castShdw,
+    receiveShdw
+  ) {
     const mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = castShdw;
+    mesh.receiveShadow = receiveShdw;
     mesh.position.set(x, y, z);
     parent.add(mesh);
 
@@ -97,15 +138,33 @@ function main() {
 
     const coneGeo = new THREE.ConeGeometry(radius, height, 32);
     const coneMtl = new THREE.MeshLambertMaterial({ color: 0xffffff });
-    const cone = addObject(-0.5, yPos, 0, coneGeo, scene, coneMtl);
+    const cone = addObject(-0.5, yPos, 0, coneGeo, scene, coneMtl, true, true);
 
     const cylinderGeo = new THREE.CylinderGeometry(radius, radius, height, 32);
     const cylinderMtl = new THREE.MeshPhongMaterial({ color: 0xffffff });
-    const cylinder = addObject(0.5, yPos, 0, cylinderGeo, scene, cylinderMtl);
+    const cylinder = addObject(
+      0.5,
+      yPos,
+      0,
+      cylinderGeo,
+      scene,
+      cylinderMtl,
+      true,
+      true
+    );
 
     const sphereGeo = new THREE.SphereGeometry(radius, 32, 32);
     const sphereMtl = new THREE.MeshPhysicalMaterial({ color: 0xffffff });
-    const sphere = addObject(0, yPosSphere, 0.25, sphereGeo, scene, sphereMtl);
+    const sphere = addObject(
+      0,
+      yPosSphere,
+      0.25,
+      sphereGeo,
+      scene,
+      sphereMtl,
+      true,
+      true
+    );
   }
 
   function createTable(room) {
@@ -115,11 +174,29 @@ function main() {
 
     const legRadius = 0.03;
     const baseGeo = new THREE.BoxGeometry(width, 0.03, depth);
-    const base = addObject(0, height, 0, baseGeo, scene, whiteMtl);
+    const base = addObject(0, height, 0, baseGeo, scene, whiteMtl, true, true);
 
     const leg = new THREE.CylinderGeometry(legRadius, legRadius, height, 24);
-    addObject(width / 2 - legRadius, -height / 2, 0, leg, base, whiteMtl);
-    addObject(-width / 2 + legRadius, -height / 2, 0, leg, base, whiteMtl);
+    addObject(
+      width / 2 - legRadius,
+      -height / 2,
+      0,
+      leg,
+      base,
+      whiteMtl,
+      true,
+      true
+    );
+    addObject(
+      -width / 2 + legRadius,
+      -height / 2,
+      0,
+      leg,
+      base,
+      whiteMtl,
+      true,
+      true
+    );
   }
 
   function createRoom() {
@@ -127,7 +204,17 @@ function main() {
     const height = 4;
     const depth = 10;
     const roomGeo = new THREE.BoxGeometry(width, height, depth);
-    const room = addObject(0, height / 2, 0, roomGeo, scene, cornellBoxMtls);
+    const room = addObject(
+      0,
+      height / 2,
+      0,
+      roomGeo,
+      scene,
+      cornellBoxMtls,
+      false,
+      true
+    );
+
     createTable(room);
   }
 
@@ -148,6 +235,47 @@ function main() {
     }
   }
 
+  class DimensionGUIHelper {
+    constructor(obj, minProp, maxProp) {
+      this.obj = obj;
+      this.minProp = minProp;
+      this.maxProp = maxProp;
+    }
+    get value() {
+      return this.obj[this.maxProp] * 2;
+    }
+    set value(v) {
+      this.obj[this.maxProp] = v / 2;
+      this.obj[this.minProp] = v / -2;
+    }
+  }
+
+  class MinMaxGUIHelper {
+    constructor(obj, minProp, maxProp, minDif) {
+      this.obj = obj;
+      this.minProp = minProp;
+      this.maxProp = maxProp;
+      this.minDif = minDif;
+    }
+    get min() {
+      return this.obj[this.minProp];
+    }
+    set min(v) {
+      this.obj[this.minProp] = v;
+      this.obj[this.maxProp] = Math.max(
+        this.obj[this.maxProp],
+        v + this.minDif
+      );
+    }
+    get max() {
+      return this.obj[this.maxProp];
+    }
+    set max(v) {
+      this.obj[this.maxProp] = v;
+      this.min = this.min;
+    }
+  }
+
   function makeXYZGUI(parent, vector3, name, onChangeFn) {
     const folder = parent.addFolder(name);
     folder.add(vector3, "x", -10, 10).onChange(onChangeFn);
@@ -161,43 +289,64 @@ function main() {
     currentLight = lightMap[value].light;
     currentLight.visible = true;
 
-    if (currentHelper !== null) currentHelper.visible = false;
+    updateLightFolder();
+
+    if (currentLightHelper !== null) currentLightHelper.visible = false;
+
+    if (currentCamHelper !== null) currentCamHelper.visible = false;
 
     if (currentLight instanceof THREE.HemisphereLight) {
-      currentHelper = null;
-      visibleCheckbox.disable();
+      currentLightHelper = null;
+      currentCamHelper = null;
+      visibleLightHelperCheckbox.disable();
+      shadowFolder.destroy();
     } else {
-      currentHelper = lightMap[value].helper;
-      currentHelper.visible = lightOptions.visibleHelper;
-      visibleCheckbox.enable();
+      currentLightHelper = lightMap[value].helper;
+      currentLightHelper.visible = lightOptions.visibleLightHelper;
+      currentCamHelper = lightMap[value].cam;
+      currentCamHelper.visible = lightOptions.visibleShadowHelper;
+      visibleLightHelperCheckbox.enable();
+      updateShadowFolder();
     }
-
-    updateLightFolder();
   }
 
-  function changeHelperVisibility(value) {
-    if (currentHelper !== null)
-      currentHelper.visible = lightOptions.visibleHelper;
+  function changeLightHelperVisibility(value) {
+    if (currentLightHelper !== null)
+      currentLightHelper.visible = lightOptions.visibleLightHelper;
+  }
+
+  function changeCameraHelperVisibility(value) {
+    if (currentCamHelper !== null)
+      currentCamHelper.visible = lightOptions.visibleShadowHelper;
   }
 
   function updateLight() {
     if (currentLight.target) currentLight.target.updateMatrixWorld();
 
-    if (currentHelper !== null) currentHelper.update();
+    if (currentLightHelper !== null) currentLightHelper.update();
+
+    if (currentCamHelper !== null) currentCamHelper.update();
+
+    currentLight.shadow.camera.updateProjectionMatrix();
+
+    console.log(currentLight.shadow);
   }
 
   const lightMap = {
     Directional: {
       light: dirLight,
       helper: dirHelper,
+      cam: dirCamHelper,
     },
     Point: {
       light: pointLight,
       helper: pointHelper,
+      cam: pointCamHelper,
     },
     Spot: {
       light: spotLight,
       helper: spotHelper,
+      cam: spotCamHelper,
     },
     Hemisphere: {
       light: hmsphrLight,
@@ -205,18 +354,24 @@ function main() {
   };
 
   let currentLight = dirLight;
-  let currentHelper = dirHelper;
+  let currentLightHelper = dirHelper;
+  let currentCamHelper = dirCamHelper;
   currentLight.visible = true;
-  currentHelper.visible = true;
+  currentLightHelper.visible = true;
+  currentCamHelper.visible = true;
   updateLight();
 
-  const lightOptions = { type: "Directional", visibleHelper: true };
+  const lightOptions = {
+    type: "Directional",
+    visibleLightHelper: true,
+    visibleShadowHelper: true,
+  };
 
   const gui = new GUI();
   gui.add(lightOptions, "type", Object.keys(lightMap)).onChange(changeLight);
-  const visibleCheckbox = gui
-    .add(lightOptions, "visibleHelper")
-    .onChange(changeHelperVisibility);
+  const visibleLightHelperCheckbox = gui
+    .add(lightOptions, "visibleLightHelper")
+    .onChange(changeLightHelperVisibility);
 
   // Dynamic folder for light propeties
   let lightFolder = gui.addFolder("Light Properties");
@@ -262,7 +417,80 @@ function main() {
     lightFolder.open();
   }
 
+  // Dynamic folder for shadow propeties
+  let shadowFolder = gui.addFolder("Shadow Camera");
+  function updateShadowFolder() {
+    if (shadowFolder) shadowFolder.destroy();
+    shadowFolder = gui.addFolder("Shadow Camera");
+
+    shadowFolder
+      .add(lightOptions, "visibleShadowHelper")
+      .onChange(changeCameraHelperVisibility);
+
+    const minMaxGUIHelper = new MinMaxGUIHelper(
+      currentLight.shadow.camera,
+      "near",
+      "far",
+      0.1
+    );
+
+    shadowFolder
+      .add(minMaxGUIHelper, "min", 0.1, 20, 0.1)
+      .name("near")
+      .onChange(updateLight);
+    shadowFolder
+      .add(minMaxGUIHelper, "max", 0.1, 20, 0.1)
+      .name("far")
+      .onChange(updateLight);
+
+    shadowFolder
+      .add(currentLight.shadow.mapSize, "width", [128, 256, 512, 1024, 2048])
+      .name("mapWidth")
+      .onChange(() => {
+        currentLight.shadow.map.dispose(); // Free memory
+        currentLight.shadow.map = null; // Prevent unwanted reuse
+        updateLight();
+      });
+
+    shadowFolder
+      .add(currentLight.shadow.mapSize, "height", [128, 256, 512, 1024, 2048])
+      .name("mapHeight")
+      .onChange(() => {
+        currentLight.shadow.map.dispose(); // Free memory
+        currentLight.shadow.map = null; // Prevent unwanted reuse
+        updateLight();
+      });
+
+    if (currentLight instanceof THREE.DirectionalLight) {
+      shadowFolder
+        .add(
+          new DimensionGUIHelper(currentLight.shadow.camera, "left", "right"),
+          "value",
+          1,
+          20
+        )
+        .name("width")
+        .onChange(updateLight);
+      shadowFolder
+        .add(
+          new DimensionGUIHelper(currentLight.shadow.camera, "bottom", "top"),
+          "value",
+          1,
+          20
+        )
+        .name("height")
+        .onChange(updateLight);
+
+      shadowFolder
+        .add(currentLight.shadow.camera, "zoom", 0.01, 1.5, 0.01)
+        .onChange(updateLight);
+    }
+
+    shadowFolder.open();
+  }
+
   updateLightFolder();
+  updateShadowFolder();
 
   // ********************** Rendering **********************
   function resizeRendererToDisplaySize(renderer) {

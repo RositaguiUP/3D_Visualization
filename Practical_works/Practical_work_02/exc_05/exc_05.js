@@ -19,6 +19,14 @@ function main() {
   controls.target.set(0, 1.5, 0);
   controls.update();
 
+  const roomWidth = 8;
+  const roomHeight = 4;
+  const roomDepth = 10;
+  const span = 0.001;
+
+  const colorRed = 0xff0000;
+  const colorGreen = 0x00ff00;
+
   // ********************** Lighting Setup **********************
 
   // Ambient
@@ -27,42 +35,85 @@ function main() {
   ambLight.visible = true;
 
   // Point
-  const pointLight = new THREE.PointLight(0xffffff, 50);
-  pointLight.position.set(0, 3.9, -2);
+  const pointLight = new THREE.PointLight(0xffffff, 6);
+  pointLight.position.set(0, 3.8, -1);
   scene.add(pointLight);
-  const pointHelper = new THREE.PointLightHelper(pointLight);
-  scene.add(pointHelper);
-  pointHelper.visible = false;
 
-  // RectAreaLightUniformsLib.init();
+  RectAreaLightUniformsLib.init();
+  const xPos = roomWidth / 2 - span;
+  const intensity = 0.1;
 
-  // {
-  // 	const color = 0xFFFFFF;
-  // 	const intensity = 5;
-  // 	const width = 1;
-  // 	const height = 1;
-  // 	const light = new THREE.RectAreaLight( color, intensity, width, height );
-  // 	light.position.set( 0, 3.9, -2 );
-  // 	light.rotation.x = THREE.MathUtils.degToRad( - 90 );
-  // 	scene.add( light );
+  const greenLight = new THREE.RectAreaLight(
+    colorGreen,
+    intensity,
+    roomDepth,
+    roomHeight
+  );
+  greenLight.position.set(xPos, roomHeight / 2, 0);
+  greenLight.rotation.y = THREE.MathUtils.degToRad(90);
+  scene.add(greenLight);
+  const greenHelper = new RectAreaLightHelper(greenLight);
+  greenLight.add(greenHelper);
 
-  // 	const helper = new RectAreaLightHelper( light );
-  // 	light.add( helper );
-  // }
+  const redLight = new THREE.RectAreaLight(
+    colorRed,
+    intensity,
+    roomDepth,
+    roomHeight
+  );
+  redLight.position.set(-xPos, roomHeight / 2, 0);
+  redLight.rotation.y = THREE.MathUtils.degToRad(-90);
+  scene.add(redLight);
+  const redHelper = new RectAreaLightHelper(redLight);
+  redLight.add(redHelper);
 
   // ********************** Materials & Objects **********************
-  const whiteMtl = new THREE.MeshLambertMaterial({
+  const whiteLmbrtMtl = new THREE.MeshLambertMaterial({
     color: 0xffffff,
     side: THREE.DoubleSide,
   });
 
-  const cornellBoxMtls = [
-    new THREE.MeshLambertMaterial({ color: 0x00ff00, side: THREE.DoubleSide }), // Back face - Green
-    new THREE.MeshLambertMaterial({ color: 0xff0000, side: THREE.DoubleSide }), // Front face - Red
-    whiteMtl,
-    whiteMtl,
-    whiteMtl,
-    whiteMtl,
+  const greenLmbrtMtl = new THREE.MeshLambertMaterial({
+    color: colorGreen,
+    side: THREE.DoubleSide,
+  });
+
+  const redLmbrtMtl = new THREE.MeshLambertMaterial({
+    color: colorRed,
+    side: THREE.DoubleSide,
+  });
+
+  const whitePhyscalMtl = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    side: THREE.DoubleSide,
+  });
+
+  const greenPhyscalMtl = new THREE.MeshPhysicalMaterial({
+    color: colorGreen,
+    side: THREE.DoubleSide,
+  });
+
+  const redPhyscalMtl = new THREE.MeshPhysicalMaterial({
+    color: colorRed,
+    side: THREE.DoubleSide,
+  });
+
+  const cornellBoxLmbrMtls = [
+    greenLmbrtMtl, // Right face - Green
+    redLmbrtMtl, // Left face - Red
+    whiteLmbrtMtl,
+    whiteLmbrtMtl,
+    whiteLmbrtMtl,
+    whiteLmbrtMtl,
+  ];
+
+  const cornellBoxPhysicalMtls = [
+    greenPhyscalMtl, // Right face - Green
+    redPhyscalMtl, // Left face - Red
+    whitePhyscalMtl,
+    whitePhyscalMtl,
+    whitePhyscalMtl,
+    whitePhyscalMtl,
   ];
 
   function addObject(x, y, z, geometry, parent, material) {
@@ -101,24 +152,89 @@ function main() {
 
     const legRadius = 0.03;
     const baseGeo = new THREE.BoxGeometry(width, 0.03, depth);
-    const base = addObject(0, height, 0, baseGeo, scene, whiteMtl);
+    const base = addObject(0, height, 0, baseGeo, scene, whiteLmbrtMtl);
 
     const leg = new THREE.CylinderGeometry(legRadius, legRadius, height, 24);
-    addObject(width / 2 - legRadius, -height / 2, 0, leg, base, whiteMtl);
-    addObject(-width / 2 + legRadius, -height / 2, 0, leg, base, whiteMtl);
+    addObject(
+      width / 2 - legRadius,
+      -height / 2,
+      0,
+      leg,
+      base,
+      whiteLmbrtMtl
+    );
+    addObject(
+      -width / 2 + legRadius,
+      -height / 2,
+      0,
+      leg,
+      base,
+      whiteLmbrtMtl
+    );
   }
 
-  function createRoom() {
-    const width = 8;
-    const height = 4;
-    const depth = 10;
+  function createRoom(width, height, depth) {
     const roomGeo = new THREE.BoxGeometry(width, height, depth);
-    const room = addObject(0, height / 2, 0, roomGeo, scene, cornellBoxMtls);
+    const room = addObject(
+      0,
+      height / 2,
+      0,
+      roomGeo,
+      scene,
+      cornellBoxLmbrMtls
+    );
     createTable(room);
   }
 
-  createRoom();
+  createRoom(roomWidth, roomHeight, roomDepth);
   createObjectsInTable();
+
+  // ********************** GUI **********************
+
+  function changeMaterials(value) {
+    let oldWhiteMtl = currentWhiteMtl;
+    let oldCornelBoxMtl = currentCornelBoxMtl;
+    if (value) {
+      currentWhiteMtl = whitePhyscalMtl;
+      currentCornelBoxMtl = cornellBoxPhysicalMtls;
+    } else {
+      currentWhiteMtl = whiteLmbrtMtl;
+      currentCornelBoxMtl = cornellBoxLmbrMtls;
+    }
+
+    scene.traverse((obj) => {
+      if (obj.isMesh) {
+        if (obj.material === oldWhiteMtl) {
+          obj.material = currentWhiteMtl;
+        } else if (obj.material === oldCornelBoxMtl) {
+          obj.material = currentCornelBoxMtl;
+        }
+      }
+    });
+  }
+
+  function changeHelperVisibility(value) {
+    greenHelper.visible = value;
+    redHelper.visible = value;
+  }
+
+  function changeIntensity(value) {
+    greenLight.intensity = value;
+    redLight.intensity = value;
+  }
+  
+  let currentWhiteMtl = whiteLmbrtMtl;
+  let currentCornelBoxMtl = cornellBoxLmbrMtls;
+
+  const guiOptions = { adaptMaterials: true, visibleHelper: false, intensity: intensity };
+
+  const gui = new GUI();
+  gui.add(guiOptions, "adaptMaterials").onChange(changeMaterials).name("Phsyical instead of Lambertian material");
+  gui.add(guiOptions, "visibleHelper").onChange(changeHelperVisibility);
+  gui.add(guiOptions, "intensity", 0, 5, 0.01).onChange(changeIntensity);;
+
+  changeMaterials(guiOptions.adaptMaterials);
+  changeHelperVisibility(guiOptions.visibleHelper);
 
   // ********************** Rendering **********************
   function resizeRendererToDisplaySize(renderer) {
