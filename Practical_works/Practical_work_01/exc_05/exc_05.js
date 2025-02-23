@@ -29,7 +29,7 @@ function main() {
     document.querySelector("#nonvr").style.display = "none";
   }
 
-  // ********************** Lightning Setup **********************
+  // ********************** Lighting Setup **********************
   {
     const color = 0xffffff;
     const intensity = 3;

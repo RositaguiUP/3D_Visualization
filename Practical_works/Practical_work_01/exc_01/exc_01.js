@@ -21,7 +21,7 @@ function main() {
   );
   camera.position.y = 140;
 
-  // ********************** Lightning Setup **********************
+  // ********************** Lighting Setup **********************
   {
     const color = 0xffffff;
     const intensity = 3;

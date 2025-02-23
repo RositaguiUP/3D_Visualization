@@ -19,7 +19,7 @@ function main() {
   controls.target.set(0, 1.5, 0);
   controls.update();
 
-  // ********************** Lightning Setup **********************
+  // ********************** Lighting Setup **********************
   // RectAreaLightUniformsLib.init();
   
   {

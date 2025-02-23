@@ -59,7 +59,7 @@ function main() {
 
   var controlsPrsp = ctrlOrbit;
 
-  // ********************** Lightning Setup **********************
+  // ********************** Lighting Setup **********************
   {
     const color = 0xffffff;
     const intensity = 3;

@@ -1,7 +1,5 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
-import { RectAreaLightHelper } from "three/addons/helpers/RectAreaLightHelper.js";
 import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
 function main() {
@@ -19,7 +17,7 @@ function main() {
   controls.target.set(0, 1.5, 0);
   controls.update();
 
-  // ********************** Lightning Setup **********************
+  // ********************** Lighting Setup **********************
 
   // Ambient
   const ambLight = new THREE.AmbientLight(0xffffff, 0.2);
@@ -27,7 +25,7 @@ function main() {
   ambLight.visible = true;
 
   // Directional
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 2);
   dirLight.position.set(0, 3.9, 0);
   dirLight.target.position.set(0, 0, 0);
   scene.add(dirLight);
@@ -63,22 +61,6 @@ function main() {
   hmsphrLight.position.set(0, 5, 0);
   scene.add(hmsphrLight);
   hmsphrLight.visible = false;
-
-  // RectAreaLightUniformsLib.init();
-
-  // {
-  // 	const color = 0xFFFFFF;
-  // 	const intensity = 5;
-  // 	const width = 1;
-  // 	const height = 1;
-  // 	const light = new THREE.RectAreaLight( color, intensity, width, height );
-  // 	light.position.set( 0, 3.9, -2 );
-  // 	light.rotation.x = THREE.MathUtils.degToRad( - 90 );
-  // 	scene.add( light );
-
-  // 	const helper = new RectAreaLightHelper( light );
-  // 	light.add( helper );
-  // }
 
   // ********************** Materials & Objects **********************
   const whiteMtl = new THREE.MeshLambertMaterial({
@@ -248,7 +230,7 @@ function main() {
     lightFolder.destroy();
     lightFolder = gui.addFolder("Light Properties");
 
-    lightFolder.add(currentLight, "intensity", 0, 10, 0.1);
+    lightFolder.add(currentLight, "intensity", 0, 50, 0.1);
 
     if (currentLight instanceof THREE.HemisphereLight) {
       lightFolder.addColor(currentLight, "color");

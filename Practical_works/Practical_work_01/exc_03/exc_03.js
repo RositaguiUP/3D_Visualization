@@ -29,7 +29,7 @@ function main() {
   var controls = new OrbitControls(camera, renderer.domElement);
   controls.listenToKeyEvents(window); // optional
 
-  // ********************** Lightning Setup **********************
+  // ********************** Lighting Setup **********************
   {
     const color = 0xffffff;
     const intensity = 1;

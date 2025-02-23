@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { RectAreaLightHelper } from "three/addons/helpers/RectAreaLightHelper.js";
+import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
 function main() {
   // ********************** Scene Setup **********************
@@ -19,7 +20,22 @@ function main() {
   controls.update();
 
   // ********************** Lighting Setup **********************
+
+  // Ambient
+  const ambLight = new THREE.AmbientLight(0xffffff, 0.2);
+  scene.add(ambLight);
+  ambLight.visible = true;
+
+  // Point
+  const pointLight = new THREE.PointLight(0xffffff, 50);
+  pointLight.position.set(0, 3.9, -2);
+  scene.add(pointLight);
+  const pointHelper = new THREE.PointLightHelper(pointLight);
+  scene.add(pointHelper);
+  pointHelper.visible = false;
+
   // RectAreaLightUniformsLib.init();
+
   // {
   // 	const color = 0xFFFFFF;
   // 	const intensity = 5;
@@ -33,25 +49,6 @@ function main() {
   // 	const helper = new RectAreaLightHelper( light );
   // 	light.add( helper );
   // }
-
-  {
-    const light = new THREE.PointLight(0xffffff, 10);
-    light.position.set(0, 3.9, -2);
-    scene.add(light);
-  }
-
-  {
-    // const color = 0xFFFFFF;
-    // const intensity = 1;
-    // const light = new THREE.DirectionalLight(color, intensity);
-    // light.position.set( 0, 3.9, 0 );
-    // //light.target.position.set(0, 0, 0);
-    // scene.add(light);
-    // //scene.add(light.target);
-
-    // const helper = new THREE.DirectionalLightHelper(light);
-    // scene.add(helper);
-  }
 
   // ********************** Materials & Objects **********************
   const whiteMtl = new THREE.MeshLambertMaterial({
@@ -81,25 +78,19 @@ function main() {
     const height = 0.3;
     const radius = 0.1;
 
-    const yPos = tableHeight + height/2 + 0.015;
+    const yPos = tableHeight + height / 2 + 0.015;
     const yPosSphere = tableHeight + radius + 0.015;
 
     const coneGeo = new THREE.ConeGeometry(radius, height, 32);
     const coneMtl = new THREE.MeshLambertMaterial({ color: 0xffffff });
     const cone = addObject(-0.5, yPos, 0, coneGeo, scene, coneMtl);
-    
+
     const cylinderGeo = new THREE.CylinderGeometry(radius, radius, height, 32);
-    const cylinderMtl = new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 100 });
+    const cylinderMtl = new THREE.MeshPhongMaterial({ color: 0xffffff });
     const cylinder = addObject(0.5, yPos, 0, cylinderGeo, scene, cylinderMtl);
-    
+
     const sphereGeo = new THREE.SphereGeometry(radius, 32, 32);
-    const sphereMtl = new THREE.MeshPhysicalMaterial({
-      color: 0xffffff,
-      roughness: 0.2,
-      metalness: 0.5,
-      clearcoat: 0.5,
-      clearcoatRoughness: 0.25,
-    });
+    const sphereMtl = new THREE.MeshPhysicalMaterial({ color: 0xffffff });
     const sphere = addObject(0, yPosSphere, 0.25, sphereGeo, scene, sphereMtl);
   }
 
@@ -147,7 +138,7 @@ function main() {
       camera.aspect = canvas.clientWidth / canvas.clientHeight;
       camera.updateProjectionMatrix();
     }
-    
+
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
   }
