@@ -17,7 +17,7 @@ function main() {
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.target.set(0, 10, 0);
 
-  // ********************** Lightning Setup **********************
+  // ********************** Lighting Setup **********************
   {
     const color = 0xffffff;
     const intensity = 3;
