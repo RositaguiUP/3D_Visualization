@@ -19,9 +19,9 @@ function main() {
   controls.target.set(0, 1.5, -4);
   controls.update();
 
-  const roomWidth = 8;
+  const roomWidth = 6;
   const roomHeight = 4;
-  const roomDepth = 10;
+  const roomDepth = 8;
   const span = 0.001;
 
   const colorRed = 0xff0000;
@@ -36,7 +36,7 @@ function main() {
 
   // Point
   const pointLight = new THREE.PointLight(0xffffff, 6);
-  pointLight.position.set(0, 3.9, -1);
+  pointLight.position.set(0, 3.9, -2);
   scene.add(pointLight);
 
   RectAreaLightUniformsLib.init();
@@ -68,144 +68,208 @@ function main() {
   redLight.add(redHelper);
 
   // ********************** Materials & Objects **********************
-  const whiteLmbrtMtl = new THREE.MeshLambertMaterial({
+  const blackLmbrtMtl = new THREE.MeshLambertMaterial({ color: 0x000000 });
+  const whiteLmbrtMtl = new THREE.MeshLambertMaterial({ color: 0xffffff });
+
+  const whiteWallLmbrtMtl = new THREE.MeshLambertMaterial({
     color: 0xffffff,
-    side: THREE.DoubleSide,
+    side: THREE.BackSide,
   });
 
   const greenLmbrtMtl = new THREE.MeshLambertMaterial({
     color: colorGreen,
-    side: THREE.DoubleSide,
+    side: THREE.BackSide,
   });
 
   const redLmbrtMtl = new THREE.MeshLambertMaterial({
     color: colorRed,
-    side: THREE.DoubleSide,
+    side: THREE.BackSide,
   });
 
-  const whitePhyscalMtl = new THREE.MeshPhysicalMaterial({
+  const blackPhysicalMtl = new THREE.MeshPhysicalMaterial({ color: 0x000000 });
+  const whitePhysicalMtl = new THREE.MeshPhysicalMaterial({ color: 0xffffff });
+
+  const whiteWallPhyscalMtl = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
-    side: THREE.DoubleSide,
+    side: THREE.BackSide,
   });
 
   const greenPhyscalMtl = new THREE.MeshPhysicalMaterial({
     color: colorGreen,
-    side: THREE.DoubleSide,
+    side: THREE.BackSide,
   });
 
   const redPhyscalMtl = new THREE.MeshPhysicalMaterial({
     color: colorRed,
-    side: THREE.DoubleSide,
+    side: THREE.BackSide,
   });
 
   const cornellBoxLmbrMtls = [
     greenLmbrtMtl, // Right face - Green
     redLmbrtMtl, // Left face - Red
-    whiteLmbrtMtl,
-    whiteLmbrtMtl,
-    whiteLmbrtMtl,
-    whiteLmbrtMtl,
+    whiteWallLmbrtMtl,
+    whiteWallLmbrtMtl,
+    whiteWallLmbrtMtl,
+    whiteWallLmbrtMtl,
   ];
 
   const cornellBoxPhysicalMtls = [
     greenPhyscalMtl, // Right face - Green
     redPhyscalMtl, // Left face - Red
-    whitePhyscalMtl,
-    whitePhyscalMtl,
-    whitePhyscalMtl,
-    whitePhyscalMtl,
+    whiteWallPhyscalMtl,
+    whiteWallPhyscalMtl,
+    whiteWallPhyscalMtl,
+    whiteWallPhyscalMtl,
   ];
+
+  const lambertMtl = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  const phongMtl = new THREE.MeshPhongMaterial({ color: 0xffffff });
+  const physicalMtl = new THREE.MeshPhysicalMaterial({ color: 0xffffff });
 
   function addObject(x, y, z, geometry, parent, material) {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     parent.add(mesh);
-
     return mesh;
   }
 
-  function createObjectsInTable() {
-    const tableHeight = 1;
-    const height = 0.3;
-    const radius = 0.1;
+  function createObjectsInTable(tableHeight, zPos) {
+    const height = 0.6;
+    const radius = height / 2;
 
+    const spaceBeetween = 1;
     const yPos = tableHeight + height / 2 + 0.015;
     const yPosSphere = tableHeight + radius + 0.015;
 
     const coneGeo = new THREE.ConeGeometry(radius, height, 32);
-    const coneMtl = new THREE.MeshLambertMaterial({ color: 0xffffff });
-    const cone = addObject(-0.5, yPos, 0, coneGeo, scene, coneMtl);
+    addObject(-spaceBeetween, yPos, zPos - 0.25, coneGeo, scene, lambertMtl);
 
     const cylinderGeo = new THREE.CylinderGeometry(radius, radius, height, 32);
-    const cylinderMtl = new THREE.MeshPhongMaterial({ color: 0xffffff });
-    const cylinder = addObject(0.5, yPos, 0, cylinderGeo, scene, cylinderMtl);
+    addObject(spaceBeetween, yPos, zPos - 0.25, cylinderGeo, scene, phongMtl);
 
     const sphereGeo = new THREE.SphereGeometry(radius, 32, 32);
-    const sphereMtl = new THREE.MeshPhysicalMaterial({ color: 0xffffff });
-    const sphere = addObject(0, yPosSphere, 0.25, sphereGeo, scene, sphereMtl);
+    addObject(0, yPosSphere, zPos + 0.25, sphereGeo, scene, physicalMtl);
   }
 
-  function createTable(room) {
-    const width = 1.4;
-    const height = 1;
-    const depth = 1;
-
+  function createTable(width, height, depth, x, y, z, angle) {
+    const baseHeight = 0.03;
+    const wheelRadius = 0.04;
     const legRadius = 0.03;
-    const baseGeo = new THREE.BoxGeometry(width, 0.03, depth);
-    const base = addObject(0, height, 0, baseGeo, scene, whiteLmbrtMtl);
+    const legHeight = height - legRadius - wheelRadius * 2;
 
-    const leg = new THREE.CylinderGeometry(legRadius, legRadius, height, 24);
-    addObject(
-      width / 2 - legRadius,
-      -height / 2,
-      0,
-      leg,
-      base,
-      whiteLmbrtMtl
+    const baseGeo = new THREE.BoxGeometry(width, baseHeight, depth);
+    const base = addObject(x, y, z, baseGeo, scene, whiteLmbrtMtl);
+    if (angle) base.rotation.y = angle;
+
+    let posX = width / 2 - legRadius * 4;
+    let posY = -height * 0.2;
+
+    const mainConector = new THREE.BoxGeometry(
+      posX * 2,
+      baseHeight * 3,
+      baseHeight
     );
-    addObject(
-      -width / 2 + legRadius,
-      -height / 2,
-      0,
-      leg,
-      base,
-      whiteLmbrtMtl
+    addObject(0, posY, 0, mainConector, base, blackLmbrtMtl);
+
+    posY = -(legHeight + baseHeight) / 2;
+
+    const legGeo = new THREE.CylinderGeometry(
+      legRadius,
+      legRadius,
+      legHeight,
+      24
     );
+    const leg1 = addObject(posX, posY, 0, legGeo, base, whiteLmbrtMtl);
+    const leg2 = addObject(-posX, posY, 0, legGeo, base, whiteLmbrtMtl);
+
+    posY = -legHeight / 2;
+
+    const auxConector = new THREE.BoxGeometry(
+      baseHeight * 2,
+      baseHeight,
+      depth
+    );
+    const conector1 = addObject(0, posY, 0, auxConector, leg1, whiteLmbrtMtl);
+    const conector2 = addObject(0, posY, 0, auxConector, leg2, whiteLmbrtMtl);
+
+    posY = legRadius - wheelRadius * 2;
+    let posZ = depth / 2 - wheelRadius * 2;
+    const wheelGeo = new THREE.CylinderGeometry(
+      wheelRadius,
+      wheelRadius,
+      legRadius,
+      24
+    );
+    let wheel = addObject(0, posY, posZ, wheelGeo, conector1, blackLmbrtMtl);
+    wheel.rotation.z = Math.PI / 2;
+    wheel = addObject(0, posY, -posZ, wheelGeo, conector1, blackLmbrtMtl);
+    wheel.rotation.z = Math.PI / 2;
+
+    wheel = addObject(0, posY, posZ, wheelGeo, conector2, blackLmbrtMtl);
+    wheel.rotation.z = Math.PI / 2;
+    wheel = addObject(0, posY, -posZ, wheelGeo, conector2, blackLmbrtMtl);
+    wheel.rotation.z = Math.PI / 2;
   }
 
-  function createRoom(width, height, depth) {
+  function createRoom(roomWidth, roomHeight, roomDepth) {
+    const width = roomWidth;
+    const height = roomHeight;
+    const depth = roomDepth;
     const roomGeo = new THREE.BoxGeometry(width, height, depth);
-    const room = addObject(
-      0,
-      height / 2,
-      0,
-      roomGeo,
-      scene,
-      cornellBoxLmbrMtls
-    );
-    createTable(room);
+    addObject(0, height / 2, 0, roomGeo, scene, cornellBoxLmbrMtls);
+
+    const tableWidth = 1.8;
+    const tableHeight = 1;
+    const tableDepth = 0.8;
+
+    const spaceBeetween = 0.02;
+
+    let xPos = (tableWidth + spaceBeetween) / 2;
+    const y = tableHeight;
+    let zPos = -tableWidth * 1.5 - tableDepth / 2 - spaceBeetween * 2;
+
+    createTable(tableWidth, tableHeight, tableDepth, xPos, y, zPos);
+    createTable(tableWidth, tableHeight, tableDepth, -xPos, y, zPos);
+
+    createObjectsInTable(tableHeight, zPos);
+
+    xPos = tableWidth - (tableDepth - spaceBeetween) / 2;
+    zPos = tableWidth + spaceBeetween;
+    let angle = Math.PI / 2;
+
+    createTable(tableWidth, tableHeight, tableDepth, -xPos, y, zPos, angle);
+    createTable(tableWidth, tableHeight, tableDepth, -xPos, y, -zPos, angle);
+    createTable(tableWidth, tableHeight, tableDepth, -xPos, y, 0, angle);
+
+    createTable(tableWidth, tableHeight, tableDepth, xPos, y, zPos, -angle);
+    createTable(tableWidth, tableHeight, tableDepth, xPos, y, -zPos, -angle);
+    createTable(tableWidth, tableHeight, tableDepth, xPos, y, 0, -angle);
   }
 
   createRoom(roomWidth, roomHeight, roomDepth);
-  createObjectsInTable();
 
   // ********************** GUI **********************
 
   function changeMaterials(value) {
-    let oldWhiteMtl = currentWhiteMtl;
+    let oldBlackLmbrtMtl = currentBlackLmbrtMtl;
+    let oldWhiteLmbrtMtl = currentWhiteLmbrtMtl;
     let oldCornelBoxMtl = currentCornelBoxMtl;
     if (value) {
-      currentWhiteMtl = whitePhyscalMtl;
+      currentBlackLmbrtMtl = blackPhysicalMtl
+      currentWhiteLmbrtMtl = whitePhysicalMtl;
       currentCornelBoxMtl = cornellBoxPhysicalMtls;
     } else {
-      currentWhiteMtl = whiteLmbrtMtl;
+      currentBlackLmbrtMtl = blackLmbrtMtl
+      currentWhiteLmbrtMtl = whiteLmbrtMtl;
       currentCornelBoxMtl = cornellBoxLmbrMtls;
     }
 
     scene.traverse((obj) => {
       if (obj.isMesh) {
-        if (obj.material === oldWhiteMtl) {
-          obj.material = currentWhiteMtl;
+        if (obj.material === oldBlackLmbrtMtl) {
+          obj.material = currentBlackLmbrtMtl;
+        } else if (obj.material === oldWhiteLmbrtMtl) {
+          obj.material = currentWhiteLmbrtMtl;
         } else if (obj.material === oldCornelBoxMtl) {
           obj.material = currentCornelBoxMtl;
         }
@@ -222,16 +286,24 @@ function main() {
     greenLight.intensity = value;
     redLight.intensity = value;
   }
-  
-  let currentWhiteMtl = whiteLmbrtMtl;
+
+  let currentBlackLmbrtMtl = blackLmbrtMtl;
+  let currentWhiteLmbrtMtl = whiteLmbrtMtl;
   let currentCornelBoxMtl = cornellBoxLmbrMtls;
 
-  const guiOptions = { adaptMaterials: true, visibleHelper: false, intensity: intensity };
+  const guiOptions = {
+    adaptMaterials: true,
+    visibleHelper: false,
+    intensity: intensity,
+  };
 
   const gui = new GUI();
-  gui.add(guiOptions, "adaptMaterials").onChange(changeMaterials).name("Physical instead of Lambertian material");
+  gui
+    .add(guiOptions, "adaptMaterials")
+    .onChange(changeMaterials)
+    .name("Physical instead of Lambertian material");
   gui.add(guiOptions, "visibleHelper").onChange(changeHelperVisibility);
-  gui.add(guiOptions, "intensity", 0, 5, 0.01).onChange(changeIntensity);;
+  gui.add(guiOptions, "intensity", 0, 5, 0.01).onChange(changeIntensity);
 
   changeMaterials(guiOptions.adaptMaterials);
   changeHelperVisibility(guiOptions.visibleHelper);

@@ -55,7 +55,7 @@ function main() {
 
   // Point
   const pointLight = new THREE.PointLight(0xffffff, 6);
-  pointLight.position.set(0, 3.9, -1);
+  pointLight.position.set(0, 3.9, -2);
   scene.add(pointLight);
 
   RectAreaLightUniformsLib.init();
