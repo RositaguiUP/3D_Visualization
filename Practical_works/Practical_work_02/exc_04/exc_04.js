@@ -17,120 +17,180 @@ function main() {
   controls.target.set(0, 1.5, -4);
   controls.update();
 
-  const roomWidth = 8;
-  const roomHeight = 4;
-  const roomDepth = 10;
-
   // ********************** Lighting Setup **********************
 
   // Ambient
   const ambLight = new THREE.AmbientLight(0xffffff, 0.2);
   scene.add(ambLight);
   ambLight.visible = true;
-
+  
   // Point
   const pointLight = new THREE.PointLight(0xffffff, 6);
   pointLight.position.set(0, 3.9, -1);
   scene.add(pointLight);
 
   // ********************** Materials & Objects **********************
-  const whiteMtl = new THREE.MeshLambertMaterial({
+
+  const blackMtl = new THREE.MeshLambertMaterial({ color: 0x000000 });
+  const whiteMtl = new THREE.MeshLambertMaterial({ color: 0xffffff });
+
+  const whiteWallMtl = new THREE.MeshLambertMaterial({
     color: 0xffffff,
-    side: THREE.DoubleSide,
+    side: THREE.BackSide,
   });
 
-  const cornellBoxLmbrMtls = [
-    new THREE.MeshLambertMaterial({
-      color: 0x00ff00,
-      side: THREE.DoubleSide,
-    }), // Right face - Green
-    new THREE.MeshLambertMaterial({
-      color: 0xff0000,
-      side: THREE.DoubleSide,
-    }), // Left face - Red
-    whiteMtl,
-    whiteMtl,
-    whiteMtl,
-    whiteMtl,
+  const cornellBoxMtls = [
+    new THREE.MeshLambertMaterial({ color: 0x00ff00, side: THREE.DoubleSide }), // Right face - Green
+    new THREE.MeshLambertMaterial({ color: 0xff0000, side: THREE.DoubleSide }), // Left face - Green
+    whiteWallMtl,
+    whiteWallMtl,
+    whiteWallMtl,
+    whiteWallMtl,
   ];
 
   const shareColor = 0xffffff;
 
-  const coneMtl = new THREE.MeshLambertMaterial({ color: shareColor });
-  const cylinderMtl = new THREE.MeshPhongMaterial({ color: shareColor });
-  const sphereMtl = new THREE.MeshPhysicalMaterial({ color: shareColor });
+  const lambertMtl = new THREE.MeshLambertMaterial({ color: shareColor });
+  const phongMtl = new THREE.MeshPhongMaterial({ color: shareColor });
+  const physicalMtl = new THREE.MeshPhysicalMaterial({ color: shareColor });
 
   function addObject(x, y, z, geometry, parent, material) {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     parent.add(mesh);
-
     return mesh;
   }
 
-  function createObjectsInTable() {
-    const tableHeight = 1;
-    const height = 0.3;
-    const radius = 0.1;
+  function createObjectsInTable(tableHeight, zPos) {
+    const height = 0.6;
+    const radius = height / 2;
 
+    const spaceBeetween = 1;
     const yPos = tableHeight + height / 2 + 0.015;
     const yPosSphere = tableHeight + radius + 0.015;
 
     const coneGeo = new THREE.ConeGeometry(radius, height, 32);
-    const cone = addObject(-0.5, yPos, 0, coneGeo, scene, coneMtl);
+    addObject(-spaceBeetween, yPos, zPos - 0.25, coneGeo, scene, lambertMtl);
 
     const cylinderGeo = new THREE.CylinderGeometry(radius, radius, height, 32);
-    const cylinder = addObject(0.5, yPos, 0, cylinderGeo, scene, cylinderMtl);
+    addObject(spaceBeetween, yPos, zPos - 0.25, cylinderGeo, scene, phongMtl);
 
     const sphereGeo = new THREE.SphereGeometry(radius, 32, 32);
-    const sphere = addObject(0, yPosSphere, 0.25, sphereGeo, scene, sphereMtl);
+    addObject(0, yPosSphere, zPos + 0.25, sphereGeo, scene, physicalMtl);
   }
 
-  function createTable(room) {
-    const width = 1.4;
-    const height = 1;
-    const depth = 1;
-
+  function createTable(width, height, depth, x, y, z, angle) {
+    const baseHeight = 0.03;
+    const wheelRadius = 0.04;
     const legRadius = 0.03;
-    const baseGeo = new THREE.BoxGeometry(width, 0.03, depth);
-    const base = addObject(0, height, 0, baseGeo, scene, whiteMtl);
+    const legHeight = height - legRadius - wheelRadius * 2;
 
-    const leg = new THREE.CylinderGeometry(legRadius, legRadius, height, 24);
-    addObject(width / 2 - legRadius, -height / 2, 0, leg, base, whiteMtl);
-    addObject(-width / 2 + legRadius, -height / 2, 0, leg, base, whiteMtl);
-  }
+    const baseGeo = new THREE.BoxGeometry(width, baseHeight, depth);
+    const base = addObject(x, y, z, baseGeo, scene, whiteMtl);
+    if (angle) base.rotation.y = angle;
 
-  function createRoom(width, height, depth) {
-    const roomGeo = new THREE.BoxGeometry(width, height, depth);
-    const room = addObject(
-      0,
-      height / 2,
-      0,
-      roomGeo,
-      scene,
-      cornellBoxLmbrMtls
+    let posX = width / 2 - legRadius * 4;
+    let posY = -height * 0.2;
+
+    const mainConector = new THREE.BoxGeometry(
+      posX * 2,
+      baseHeight * 3,
+      baseHeight
     );
-    createTable(room);
+    addObject(0, posY, 0, mainConector, base, blackMtl);
+
+    posY = -(legHeight + baseHeight) / 2;
+
+    const legGeo = new THREE.CylinderGeometry(
+      legRadius,
+      legRadius,
+      legHeight,
+      24
+    );
+    const leg1 = addObject(posX, posY, 0, legGeo, base, whiteMtl);
+    const leg2 = addObject(-posX, posY, 0, legGeo, base, whiteMtl);
+
+    posY = -legHeight / 2;
+
+    const auxConector = new THREE.BoxGeometry(
+      baseHeight * 2,
+      baseHeight,
+      depth
+    );
+    const conector1 = addObject(0, posY, 0, auxConector, leg1, whiteMtl);
+    const conector2 = addObject(0, posY, 0, auxConector, leg2, whiteMtl);
+
+    posY = legRadius - wheelRadius * 2;
+    let posZ = depth / 2 - wheelRadius * 2;
+    const wheelGeo = new THREE.CylinderGeometry(
+      wheelRadius,
+      wheelRadius,
+      legRadius,
+      24
+    );
+    let wheel = addObject(0, posY, posZ, wheelGeo, conector1, blackMtl);
+    wheel.rotation.z = Math.PI / 2;
+    wheel = addObject(0, posY, -posZ, wheelGeo, conector1, blackMtl);
+    wheel.rotation.z = Math.PI / 2;
+
+    wheel = addObject(0, posY, posZ, wheelGeo, conector2, blackMtl);
+    wheel.rotation.z = Math.PI / 2;
+    wheel = addObject(0, posY, -posZ, wheelGeo, conector2, blackMtl);
+    wheel.rotation.z = Math.PI / 2;
   }
 
-  createRoom(roomWidth, roomHeight, roomDepth);
-  createObjectsInTable();
+  function createRoom() {
+    const width = 6;
+    const height = 4;
+    const depth = 8;
+    const roomGeo = new THREE.BoxGeometry(width, height, depth);
+    addObject(0, height / 2, 0, roomGeo, scene, cornellBoxMtls);
+
+    const tableWidth = 1.8;
+    const tableHeight = 1;
+    const tableDepth = 0.8;
+
+    const spaceBeetween = 0.02;
+
+    let xPos = (tableWidth + spaceBeetween) / 2;
+    const y = tableHeight;
+    let zPos = -tableWidth * 1.5 - tableDepth / 2 - spaceBeetween * 2;
+
+    createTable(tableWidth, tableHeight, tableDepth, xPos, y, zPos);
+    createTable(tableWidth, tableHeight, tableDepth, -xPos, y, zPos);
+
+    createObjectsInTable(tableHeight, zPos);
+
+    xPos = tableWidth - (tableDepth - spaceBeetween) / 2;
+    zPos = tableWidth + spaceBeetween;
+    let angle = Math.PI / 2;
+
+    createTable(tableWidth, tableHeight, tableDepth, -xPos, y, zPos, angle);
+    createTable(tableWidth, tableHeight, tableDepth, -xPos, y, -zPos, angle);
+    createTable(tableWidth, tableHeight, tableDepth, -xPos, y, 0, angle);
+
+    createTable(tableWidth, tableHeight, tableDepth, xPos, y, zPos, -angle);
+    createTable(tableWidth, tableHeight, tableDepth, xPos, y, -zPos, -angle);
+    createTable(tableWidth, tableHeight, tableDepth, xPos, y, 0, -angle);
+  }
+
+  createRoom();
 
   // ********************** GUI **********************
   function changeShareMtlProperty(property, value, needsUpdate) {
     if (property === "color") {
-      coneMtl[property].set(value);
-      cylinderMtl[property].set(value);
-      sphereMtl[property].set(value);
+      lambertMtl[property].set(value);
+      phongMtl[property].set(value);
+      physicalMtl[property].set(value);
     } else {
-      coneMtl[property] = value;
-      cylinderMtl[property] = value;
-      sphereMtl[property] = value;
+      lambertMtl[property] = value;
+      phongMtl[property] = value;
+      physicalMtl[property] = value;
 
       if (needsUpdate) {
-        coneMtl.needsUpdate = true;
-        cylinderMtl.needsUpdate = true;
-        sphereMtl.needsUpdate = true;
+        lambertMtl.needsUpdate = true;
+        phongMtl.needsUpdate = true;
+        physicalMtl.needsUpdate = true;
       }
     }
   }
@@ -221,7 +281,7 @@ function main() {
 
   const materialOptions = {
     color: shareColor,
-    emissive: coneMtl.emissive,
+    emissive: lambertMtl.emissive,
     transparent: false,
     opacity: 1,
     flatShading: false,
@@ -300,52 +360,52 @@ function main() {
     const lambertFolder = gui.addFolder("Lambert Properties");
 
     const currentProps = {
-      combine: Object.keys(combineOptions)[coneMtl.combine],
+      combine: Object.keys(combineOptions)[lambertMtl.combine],
     };
 
     lambertFolder
       .add(currentProps, "combine", Object.keys(combineOptions))
       .onChange((value) =>
-        changeProperty(coneMtl, "combine", combineOptions[value])
+        changeProperty(lambertMtl, "combine", combineOptions[value])
       );
-    lambertFolder.add(coneMtl, "reflectivity", 0, 1);
-    lambertFolder.add(coneMtl, "refractionRatio", 0, 1);
+    lambertFolder.add(lambertMtl, "reflectivity", 0, 1);
+    lambertFolder.add(lambertMtl, "refractionRatio", 0, 1);
   }
 
   function createPhongFolder() {
     const phongFolder = gui.addFolder("Phong Properties");
-    phongFolder.addColor(cylinderMtl, "specular");
-    phongFolder.add(cylinderMtl, "shininess", 0, 100);
+    phongFolder.addColor(phongMtl, "specular");
+    phongFolder.add(phongMtl, "shininess", 0, 100);
 
     const currentProps = {
-      combine: Object.keys(combineOptions)[cylinderMtl.combine],
+      combine: Object.keys(combineOptions)[phongMtl.combine],
     };
 
     phongFolder
       .add(currentProps, "combine", Object.keys(combineOptions))
       .onChange((value) =>
-        changeProperty(cylinderMtl, "combine", combineOptions[value])
+        changeProperty(phongMtl, "combine", combineOptions[value])
       );
-    phongFolder.add(cylinderMtl, "reflectivity", 0, 1);
-    phongFolder.add(cylinderMtl, "refractionRatio", 0, 1);
+    phongFolder.add(phongMtl, "reflectivity", 0, 1);
+    phongFolder.add(phongMtl, "refractionRatio", 0, 1);
   }
 
   function createPhysicalFolder() {
     const physicalFolder = gui.addFolder("Physical Properties");
 
-    physicalFolder.add(sphereMtl, "roughness", 0, 1);
-    physicalFolder.add(sphereMtl, "metalness", 0, 1);
-    physicalFolder.add(sphereMtl, "ior", 1, 2.333);
-    physicalFolder.add(sphereMtl, "reflectivity", 0, 1);
-    physicalFolder.add(sphereMtl, "iridescence", 0, 1);
-    physicalFolder.add(sphereMtl, "iridescenceIOR", 1, 2.333);
-    physicalFolder.add(sphereMtl, "sheen", 0, 1);
-    physicalFolder.add(sphereMtl, "sheenRoughness", 0, 1);
-    physicalFolder.addColor(sphereMtl, "sheenColor");
-    physicalFolder.add(sphereMtl, "clearcoat", 0, 1).step(0.01);
-    physicalFolder.add(sphereMtl, "clearcoatRoughness", 0, 1).step(0.01);
-    physicalFolder.add(sphereMtl, "specularIntensity", 0, 1);
-    physicalFolder.addColor(sphereMtl, "specularColor");
+    physicalFolder.add(physicalMtl, "roughness", 0, 1);
+    physicalFolder.add(physicalMtl, "metalness", 0, 1);
+    physicalFolder.add(physicalMtl, "ior", 1, 2.333);
+    physicalFolder.add(physicalMtl, "reflectivity", 0, 1);
+    physicalFolder.add(physicalMtl, "iridescence", 0, 1);
+    physicalFolder.add(physicalMtl, "iridescenceIOR", 1, 2.333);
+    physicalFolder.add(physicalMtl, "sheen", 0, 1);
+    physicalFolder.add(physicalMtl, "sheenRoughness", 0, 1);
+    physicalFolder.addColor(physicalMtl, "sheenColor");
+    physicalFolder.add(physicalMtl, "clearcoat", 0, 1).step(0.01);
+    physicalFolder.add(physicalMtl, "clearcoatRoughness", 0, 1).step(0.01);
+    physicalFolder.add(physicalMtl, "specularIntensity", 0, 1);
+    physicalFolder.addColor(physicalMtl, "specularColor");
 
     const currentMaps = {
       roughnessMap: "none",
@@ -356,18 +416,18 @@ function main() {
     physicalFolder
       .add(currentMaps, "roughnessMap", Object.keys(roughMapOptions))
       .onChange((value) =>
-        changeProperty(sphereMtl, "roughnessMap", roughMapOptions[value])
+        changeProperty(physicalMtl, "roughnessMap", roughMapOptions[value])
       );
     physicalFolder
       .add(currentMaps, "metalnessMap", Object.keys(alphaMapOptions))
       .onChange((value) =>
-        changeProperty(sphereMtl, "metalnessMap", alphaMapOptions[value])
+        changeProperty(physicalMtl, "metalnessMap", alphaMapOptions[value])
       );
 
     physicalFolder
       .add(currentMaps, "iridescenceMap", Object.keys(alphaMapOptions))
       .onChange((value) =>
-        changeProperty(sphereMtl, "iridescenceMap", alphaMapOptions[value])
+        changeProperty(physicalMtl, "iridescenceMap", alphaMapOptions[value])
       );
   }
 

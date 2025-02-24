@@ -101,8 +101,8 @@ function main() {
   });
 
   const cornellBoxMtls = [
-    new THREE.MeshLambertMaterial({ color: 0x00ff00, side: THREE.DoubleSide }), // Back face - Green
-    new THREE.MeshLambertMaterial({ color: 0xff0000, side: THREE.DoubleSide }), // Front face - Red
+    new THREE.MeshLambertMaterial({ color: 0x00ff00, side: THREE.DoubleSide }), // Right face - Green
+    new THREE.MeshLambertMaterial({ color: 0xff0000, side: THREE.DoubleSide }),  // Left face - Green
     whiteMtlDbl,
     whiteMtlDbl,
     whiteMtlDbl,
