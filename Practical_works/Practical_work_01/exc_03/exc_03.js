@@ -24,7 +24,7 @@ function main() {
   scene.background = new THREE.Color(0x333333);
 
   const camera = new THREE.PerspectiveCamera(75, 2, 0.1, 1000);
-  camera.position.z = 5;
+  camera.position.z = 2;
 
   var controls = new OrbitControls(camera, renderer.domElement);
   controls.listenToKeyEvents(window); // optional

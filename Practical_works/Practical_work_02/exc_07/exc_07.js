@@ -32,10 +32,10 @@ function main() {
     100
   );
   camera.position.y = 1.7;
-  camera.position.z = 5;
+  camera.position.z = 2;
 
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 1.5, 0);
+  controls.target.set(0, 1.5, -4);
   controls.update();
 
   const roomWidth = 8;
