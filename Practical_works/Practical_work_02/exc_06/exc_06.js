@@ -427,8 +427,6 @@ function main() {
     if (currentCamHelper !== null) currentCamHelper.update();
 
     currentLight.shadow.camera.updateProjectionMatrix();
-
-    console.log(currentLight.shadow);
   }
 
   const lightMap = {

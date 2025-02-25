@@ -12,7 +12,7 @@ body {
 
 .mode {
   position: absolute;
-  top: 0em; /* Adjust as needed */
+  top: 0em;
   left: 50%;
   transform: translateX(-50%);
   font-size: 15px;
@@ -22,10 +22,10 @@ body {
 }
 
 .mode a {
-  color: #ebebeb; /* Default color */
+  color: #ebebeb;
   text-decoration: none;
 }
 
 .mode a:visited {
-  color: #ebebeb; /* Color after being clicked */
+  color: #ebebeb;
 }

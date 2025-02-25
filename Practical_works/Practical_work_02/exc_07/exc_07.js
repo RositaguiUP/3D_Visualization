@@ -17,12 +17,7 @@ function main() {
 
   const scene = new THREE.Scene();
 
-  const camera = new THREE.PerspectiveCamera(
-    65,
-    2, //window.innerWidth / window.innerHeight,
-    0.01,
-    100
-  );
+  const camera = new THREE.PerspectiveCamera(65, 2, 0.01,100);
   camera.position.y = 1.7;
   camera.position.z = 2;
 
@@ -325,25 +320,6 @@ function main() {
   };
 
   const gui = new GUI();
-  // gui
-  //   .add(guiOptions, "adaptMaterials")
-  //   .onChange((value) => {
-  //     // if (isUpdating) return;
-
-  //     // isUpdating = true;
-  //     console.log("Checkbox changed:", value);
-  //     changeMaterials(value);
-
-  //     // setTimeout(() => {
-  //     //   isUpdating = false;
-  //     // }, 100); // Increase the debounce time
-  //   })
-  //   // .onFinishChange((value) => {
-  //   //   console.log("Checkbox changed once:", value);
-  //   //   changeMaterials(value);
-  //   // })
-  //   .name("Physical instead of Lambertian material");
-  // gui.add(guiOptions, "visibleHelper").onChange(changeHelperVisibility);
   gui
     .add({ Change: () => changeMaterials(guiOptions.adaptMaterials) }, "Change")
     .name("Enable/Disable Physical Material");
@@ -397,10 +373,6 @@ function main() {
     group.listenToXRControllerEvents(controller2);
     scene.add(group);
 
-    gui.domElement.addEventListener("click", (e) => {
-      console.log("Clicked GUI element:", e.target);
-    });
-
     // 3D gui
     const mesh = new HTMLMesh(gui.domElement);
     mesh.position.x = -1.2;
@@ -410,21 +382,6 @@ function main() {
     mesh.scale.setScalar(4);
     group.add(mesh);
   }
-
-  // let stats, statsMesh;
-
-  // stats = new Stats();
-  // stats.dom.style.width = "80px";
-  // stats.dom.style.height = "48px";
-  // document.body.appendChild(stats.dom);
-
-  // statsMesh = new HTMLMesh(stats.dom);
-  // statsMesh.position.x = -0.75;
-  // statsMesh.position.y = 2;
-  // statsMesh.position.z = -0.6;
-  // statsMesh.rotation.y = Math.PI / 4;
-  // statsMesh.scale.setScalar(2.5);
-  // group.add(statsMesh);
 
   // ********************** Rendering **********************
   function resizeRendererToDisplaySize(renderer) {

@@ -17,11 +17,12 @@ function main() {
   const allowvr = params.get("allowvr") === "true";
   if (allowvr) {
     renderer.xr.enabled = true;
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(VRButton.createButton(renderer));
     document.querySelector("#vr").style.display = "none";
     camera.position.set(0, 20, 50);
   } else {
-    // no VR, add some controls
     const controls = new OrbitControls(camera, canvas);
     //controls.target.set(0, 10, 0);
     controls.target.set(0, 1.6, -2);
