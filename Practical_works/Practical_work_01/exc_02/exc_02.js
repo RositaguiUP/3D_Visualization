@@ -582,8 +582,6 @@ function main() {
       controlsPrsp = ctrlTrck;
     }
 
-    console.log(controlsPrsp);
-
     if (controlsPrsp === ctrlFrst && event.key === " ") {
       controlsPrsp.activeLook = 1;
     }
