@@ -8,7 +8,7 @@ function main() {
 
   const scene = new THREE.Scene();
 
-  const camera = new THREE.PerspectiveCamera(75, 2, 0.1, 150);
+  const camera = new THREE.PerspectiveCamera(65, 2, 0.01, 100);
   camera.position.set(0, 1.6, 2);
 
   const controls = new OrbitControls(camera, renderer.domElement);
