@@ -450,7 +450,6 @@ function main() {
 
     if (angle * orientation < finishAngle) {
       part.rotation[axis] += time * orientation;
-      console.log(time);
       return false;
     }
 
@@ -472,7 +471,7 @@ function main() {
         currentStep += 1;
       } else {
         currentStep = 0;
-        //orientChange *= -1;
+        orientChange *= -1;
       }
       time = 0;
       rotationDone = false;
@@ -537,7 +536,8 @@ function main() {
   let rotationDone = false;
   let orientChange = 1;
   let time = 0;
-  let speed = 0.00001;
+  let speedAnim = 0.0001;
+  let speedRotation = 0.005;
 
   function resizeRendererToDisplaySize(renderer) {
     const canvas = renderer.domElement;
@@ -551,37 +551,39 @@ function main() {
   }
 
   function animate() {
-    time += speed;
-
     if (resizeRendererToDisplaySize(renderer)) {
       const canvas = renderer.domElement;
       camera.aspect = canvas.clientWidth / canvas.clientHeight;
       camera.updateProjectionMatrix();
     }
 
-    animArm(stepsLeft);
-    //animArm(stepsRight);
+    // Anim 2
+    // time += speedAnim;
+    // animArm(stepsLeft);
+    // animArm(stepsRight);
 
-    // rotatePrearm("left");
-    // rotatePrearm("right");
+    // Anim 1
+    time += speedRotation;
+    rotatePrearm("left");
+    //rotatePrearm("right");
 
-    //rotateShoulder("left");
-    // rotateShoulder("right");
+    rotateShoulder("left");
+    rotateShoulder("right");
 
-    // rotateArm("left");
-    // rotateArm("right");
+    rotateArm("left");
+    rotateArm("right");
 
     //rotateElbow("left");
-    //rotateElbow("right");
+    rotateElbow("right");
 
-    // rotateForearm("left");
-    //rotateForearm("right");
+    rotateForearm("left");
+    rotateForearm("right");
 
-    // rotateWrist("left");
-    // rotateWrist("right");
+    rotateWrist("left");
+    //rotateWrist("right");
 
-    // rotateHand("left");
-    // rotateHand("right");
+    rotateHand("left");
+    rotateHand("right");
 
     renderer.render(scene, camera);
     requestAnimationFrame(animate);

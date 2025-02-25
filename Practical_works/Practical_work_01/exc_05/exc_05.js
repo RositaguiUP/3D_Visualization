@@ -6,6 +6,7 @@ function main() {
   // ********************** Scene Setup **********************
   const canvas = document.querySelector("#c");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setAnimationLoop(animate);
 
   const scene = new THREE.Scene();
 
@@ -420,13 +421,48 @@ function main() {
   buildRobot();
 
   // ********************** Rendering **********************
+  function rotatePrearm(side) {
+    let orientation = side === "left" ? 1 : -1;
+    robot[side].prearm.rotation.y =
+      ((Math.sin(time) * Math.PI) / 4) * orientation;
+  }
+
+  function rotateShoulder(side) {
+    robot[side].shoulder.rotation.x =
+      (Math.sin(time) * Math.PI) / 6 + Math.PI / 4;
+  }
+
+  function rotateArm(side) {
+    let orientation = side === "left" ? 1 : -1;
+    robot[side].arm.rotation.y = ((Math.sin(time) * Math.PI) / 4) * orientation;
+  }
+
+  function rotateElbow(side) {
+    robot[side].elbow.rotation.x = (Math.sin(time) * Math.PI) / 6 + Math.PI / 4;
+  }
+
+  function rotateForearm(side) {
+    let orientation = side === "left" ? 1 : -1;
+    robot[side].forearm.rotation.y =
+      ((Math.sin(time) * Math.PI) / 4) * orientation;
+  }
+
+  function rotateWrist(side) {
+    robot[side].wrist.rotation.x = (Math.sin(time) * Math.PI) / 6 + Math.PI / 4;
+  }
+
+  function rotateHand(side) {
+    let orientation = side === "left" ? 1 : -1;
+    robot[side].hand.rotation.y =
+      ((Math.sin(time) * Math.PI) / 4) * orientation;
+  }
+
   function rotatePart(part, isJoint, orientation, finishAngle) {
     let axis = isJoint ? "x" : "y";
     let angle = part.rotation[axis];
 
     if (angle * orientation < finishAngle) {
       part.rotation[axis] += time * orientation;
-      console.log(time);
       return false;
     }
 
@@ -448,7 +484,7 @@ function main() {
         currentStep += 1;
       } else {
         currentStep = 0;
-        //orientChange *= -1;
+        orientChange *= -1;
       }
       time = 0;
       rotationDone = false;
@@ -513,7 +549,8 @@ function main() {
   let rotationDone = false;
   let orientChange = 1;
   let time = 0;
-  let speed = 0.0001;
+  let speedAnim = 0.0001;
+  let speedRotation = 0.005;
 
   function resizeRendererToDisplaySize(renderer) {
     const canvas = renderer.domElement;
@@ -527,22 +564,42 @@ function main() {
   }
 
   function animate() {
-    time += speed;
-
     if (resizeRendererToDisplaySize(renderer)) {
       const canvas = renderer.domElement;
       camera.aspect = canvas.clientWidth / canvas.clientHeight;
       camera.updateProjectionMatrix();
     }
 
+    // Anim 2
+    time += speedAnim;
     animArm(stepsLeft);
-    // animArm(stepsRight);
+    animArm(stepsRight);
+
+    // Anim 1
+    // time += speedRotation;
+    // rotatePrearm("left");
+    // //rotatePrearm("right");
+
+    // rotateShoulder("left");
+    // rotateShoulder("right");
+
+    // rotateArm("left");
+    // rotateArm("right");
+
+    // //rotateElbow("left");
+    // rotateElbow("right");
+
+    // rotateForearm("left");
+    // rotateForearm("right");
+
+    // rotateWrist("left");
+    // //rotateWrist("right");
+
+    // rotateHand("left");
+    // rotateHand("right");
 
     renderer.render(scene, camera);
-    requestAnimationFrame(animate);
   }
-
-  requestAnimationFrame(animate);
 }
 
 main();
