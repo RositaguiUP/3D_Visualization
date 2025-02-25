@@ -5,13 +5,12 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 function main() {
   // ********************** Scene Setup **********************
   const canvas = document.querySelector("#c");
-  const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
-  renderer.setAnimationLoop(animate);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 
   const scene = new THREE.Scene();
 
   const camera = new THREE.PerspectiveCamera(75, 2, 0.1, 150);
-  camera.position.set(0, 20, 50);
+  camera.position.set(0, 1.6, 2);
 
   const params = new URL(document.location).searchParams;
   const allowvr = params.get("allowvr") === "true";
@@ -21,11 +20,9 @@ function main() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(VRButton.createButton(renderer));
     document.querySelector("#vr").style.display = "none";
-    camera.position.set(0, 20, 50);
   } else {
     const controls = new OrbitControls(camera, canvas);
-    //controls.target.set(0, 10, 0);
-    controls.target.set(0, 1.6, -2);
+    controls.target.set(0, 1.6, 0);
     controls.update();
     document.querySelector("#nonvr").style.display = "none";
   }
@@ -43,10 +40,37 @@ function main() {
   }
 
   // ********************** Materials & Objects **********************
-  const whiteMtl = new THREE.MeshPhongMaterial({
-    color: 0xffffff,
-    side: THREE.DoubleSide,
-  });
+  const loader = new THREE.TextureLoader();
+  const bodyTxt = loader.load("../public/textures/robot/body_tex.jpg");
+  const trnglTxt = loader.load("../public/textures/robot/triangl_tex.jpg");
+  const screwTxt = loader.load("../public/textures/robot/screw_tex.jpg");
+  const fingerTxt = loader.load("../public/textures/robot/finger_tex.jpg");
+
+  const bodySingleMtl = new THREE.MeshLambertMaterial({ map: bodyTxt });
+  const trnglMtl = new THREE.MeshLambertMaterial({ map: trnglTxt });
+  const screwMtl = new THREE.MeshLambertMaterial({ map: screwTxt });
+  const fingerSingleMtl = new THREE.MeshLambertMaterial({ map: fingerTxt });
+
+  const blackMtl = new THREE.MeshLambertMaterial({ color: 0x181b1e });
+  const whiteMtl = new THREE.MeshLambertMaterial({ color: 0xffffff });
+
+  const bodyMtl = [
+    blackMtl,
+    blackMtl,
+    blackMtl,
+    blackMtl,
+    bodySingleMtl,
+    bodySingleMtl,
+  ];
+  const armMtl = [screwMtl, screwMtl, blackMtl, blackMtl, trnglMtl, trnglMtl];
+  const fingerMtl = [
+    fingerSingleMtl,
+    fingerSingleMtl,
+    blackMtl,
+    blackMtl,
+    fingerSingleMtl,
+    fingerSingleMtl,
+  ];
 
   function marksGrid(gridSize, unitSize) {
     const dashMtl = new THREE.LineDashedMaterial({
@@ -97,8 +121,15 @@ function main() {
     right: {},
   };
 
-  function addPart(x, y, z, geometry, name, parent, side) {
-    const mesh = new THREE.Mesh(geometry, whiteMtl);
+  function addObject(x, y, z, geometry, parent, material) {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    parent.add(mesh);
+    return mesh;
+  }
+
+  function addPart(x, y, z, geometry, name, parent, material, side) {
+    const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     parent.add(mesh);
 
@@ -107,6 +138,7 @@ function main() {
     } else {
       robot[side][name] = mesh;
     }
+    return mesh;
   }
 
   function addPivot(x, y, z, pivot, name, parent, side) {
@@ -116,15 +148,14 @@ function main() {
   }
 
   function buildArm(side, bodyHeight) {
-    const armWidth = 7;
-    const armHeight = 10;
-    const armDepth = 5;
-    const handWidth = 3;
-    const handHeight = 5;
-    const handDepth = 2;
-    const fingerWidth = 1;
-    const fingerHeight = 2;
-    const fingerDepth = 0.4;
+    const armWidth = 0.15;
+    const armHeight = 0.25;
+    const armDepth = 0.1;
+    const handRadius = 0.04;
+    const handHeight = 0.06;
+    const fingerWidth = 0.02;
+    const fingerHeight = 0.08;
+    const fingerDepth = 0.01;
 
     const prearmPivot = new THREE.Object3D();
     if (side === "left") {
@@ -157,6 +188,7 @@ function main() {
       prearm,
       "prearm",
       robot[side].prearmPivot,
+      armMtl,
       side
     );
 
@@ -172,25 +204,52 @@ function main() {
     );
 
     const arm = new THREE.BoxGeometry(armWidth, armHeight, armDepth);
-    addPart(0, armHeight / 2, 0, arm, "arm", robot[side].shoulder, side);
+    addPart(
+      0,
+      armHeight / 2,
+      0,
+      arm,
+      "arm",
+      robot[side].shoulder,
+      armMtl,
+      side
+    );
 
     const elbow = new THREE.Object3D();
     addPivot(0, armHeight / 2, 0, elbow, "elbow", robot[side].arm, side);
 
     const forearm = new THREE.BoxGeometry(armWidth, armHeight, armDepth);
-    addPart(0, armHeight / 2, 0, forearm, "forearm", robot[side].elbow, side);
+    addPart(
+      0,
+      armHeight / 2,
+      0,
+      forearm,
+      "forearm",
+      robot[side].elbow,
+      armMtl,
+      side
+    );
 
     const wrist = new THREE.Object3D();
     addPivot(0, armHeight / 2, 0, wrist, "wrist", robot[side].forearm, side);
 
-    const hand = new THREE.BoxGeometry(handWidth, handHeight, handDepth);
-    addPart(0, handHeight / 2, 0, hand, "hand", robot[side].wrist, side);
+    const hand = new THREE.CylinderGeometry(handRadius, handRadius, handHeight);
+    addPart(
+      0,
+      handHeight / 2,
+      0,
+      hand,
+      "hand",
+      robot[side].wrist,
+      blackMtl,
+      side
+    );
 
     const fingeJoint1 = new THREE.Object3D();
     addPivot(
       0,
       handHeight / 2,
-      0.5,
+      0.02,
       fingeJoint1,
       "fingeJoint1",
       robot[side].hand,
@@ -201,7 +260,7 @@ function main() {
     addPivot(
       0,
       handHeight / 2,
-      -0.5,
+      -0.02,
       fingeJoint2,
       "fingeJoint2",
       robot[side].hand,
@@ -220,6 +279,7 @@ function main() {
       finger,
       "finger1",
       robot[side].fingeJoint1,
+      fingerMtl,
       side
     );
     addPart(
@@ -229,6 +289,7 @@ function main() {
       finger,
       "finger2",
       robot[side].fingeJoint2,
+      fingerMtl,
       side
     );
 
@@ -247,20 +308,115 @@ function main() {
   }
 
   function buildRobot() {
-    const bodyWidth = 20;
-    const bodyHeight = 20;
-    const bodyDepth = 10;
+    const baseWidth = 0.5;
+    const baseHeight = 0.15;
+    const baseDepth = 0.8;
+    const supportWidth = 0.1;
+    const supportHeight = 2;
+    const supportDepth = 0.1;
+    const bodyWidth = 0.5;
+    const bodyHeight = 0.5;
+    const bodyDepth = 0.25;
 
-    const body = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyDepth);
-    addPart(0, bodyHeight / 2, -20, body, "body", scene);
+    let yPos = baseHeight / 2;
+    let zPos = -0.3;
+    const baseGeo = new THREE.BoxGeometry(baseWidth, baseHeight, baseDepth);
+    const base = addPart(0, yPos, zPos, baseGeo, "base", scene, blackMtl);
+
+    yPos = supportHeight / 2;
+    zPos = -0.2;
+    const supportGeo = new THREE.BoxGeometry(
+      supportWidth,
+      supportHeight,
+      supportDepth
+    );
+    const support = addPart(
+      0,
+      yPos,
+      zPos,
+      supportGeo,
+      "support",
+      base,
+      whiteMtl
+    );
+
+    yPos = 0.3;
+    const bodyGeo = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyDepth);
+    const body = addPart(0, yPos, 0, bodyGeo, "body", support, bodyMtl);
+    body.rotation.x = Math.PI / 16;
 
     buildArm("left", bodyHeight);
     buildArm("right", bodyHeight);
 
     robot.body.rotation.z = Math.PI / 4;
   }
-  
-  marksGrid(150, 2);
+
+  function createTable(width, height, depth, x, y, z, angle) {
+    const baseHeight = 0.03;
+    const wheelRadius = 0.04;
+    const legRadius = 0.03;
+    const legHeight = height - legRadius - wheelRadius * 2;
+
+    const baseGeo = new THREE.BoxGeometry(width, baseHeight, depth);
+    const base = addObject(x, y, z, baseGeo, scene, whiteMtl);
+    if (angle) base.rotation.y = angle;
+
+    let posX = width / 2 - legRadius * 4;
+    let posY = -height * 0.2;
+
+    const mainConector = new THREE.BoxGeometry(
+      posX * 2,
+      baseHeight * 3,
+      baseHeight
+    );
+    addObject(0, posY, 0, mainConector, base, blackMtl);
+
+    posY = -(legHeight + baseHeight) / 2;
+
+    const legGeo = new THREE.CylinderGeometry(
+      legRadius,
+      legRadius,
+      legHeight,
+      24
+    );
+    const leg1 = addObject(posX, posY, 0, legGeo, base, whiteMtl);
+    const leg2 = addObject(-posX, posY, 0, legGeo, base, whiteMtl);
+
+    posY = -legHeight / 2;
+
+    const auxConector = new THREE.BoxGeometry(
+      baseHeight * 2,
+      baseHeight,
+      depth
+    );
+    const conector1 = addObject(0, posY, 0, auxConector, leg1, whiteMtl);
+    const conector2 = addObject(0, posY, 0, auxConector, leg2, whiteMtl);
+
+    posY = legRadius - wheelRadius * 2;
+    let posZ = depth / 2 - wheelRadius * 2;
+    const wheelGeo = new THREE.CylinderGeometry(
+      wheelRadius,
+      wheelRadius,
+      legRadius,
+      24
+    );
+    let wheel = addObject(0, posY, posZ, wheelGeo, conector1, blackMtl);
+    wheel.rotation.z = Math.PI / 2;
+    wheel = addObject(0, posY, -posZ, wheelGeo, conector1, blackMtl);
+    wheel.rotation.z = Math.PI / 2;
+
+    wheel = addObject(0, posY, posZ, wheelGeo, conector2, blackMtl);
+    wheel.rotation.z = Math.PI / 2;
+    wheel = addObject(0, posY, -posZ, wheelGeo, conector2, blackMtl);
+    wheel.rotation.z = Math.PI / 2;
+  }
+
+  const tableWidth = 1.8;
+  const tableHeight = 1;
+  const tableDepth = 0.8;
+
+  marksGrid(20, 0.1);
+  createTable(tableWidth, tableHeight, tableDepth, 0, tableHeight, 0);
   buildRobot();
 
   // ********************** Rendering **********************
@@ -367,7 +523,6 @@ function main() {
     if (needResize) {
       renderer.setSize(width, height, false);
     }
-
     return needResize;
   }
 
@@ -379,12 +534,15 @@ function main() {
       camera.aspect = canvas.clientWidth / canvas.clientHeight;
       camera.updateProjectionMatrix();
     }
-    
+
     animArm(stepsLeft);
-    //animArm(stepsRight);
+    // animArm(stepsRight);
 
     renderer.render(scene, camera);
+    requestAnimationFrame(animate);
   }
+
+  requestAnimationFrame(animate);
 }
 
 main();

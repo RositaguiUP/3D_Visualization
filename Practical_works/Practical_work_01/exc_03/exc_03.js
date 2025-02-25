@@ -184,7 +184,7 @@ function main() {
   geometry.setIndex(allIndices);
 
   const loader = new THREE.TextureLoader();
-  const texture = loader.load("../public/images/grenouille.jpg");
+  const texture = loader.load("../public/textures/grenouille.jpg");
 
   const cubes = [
     makeInstance(scene, texture, geometry, 0x00ff00, 0),
