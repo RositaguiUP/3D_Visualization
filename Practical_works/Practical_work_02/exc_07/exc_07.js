@@ -13,30 +13,34 @@ function main() {
   // ********************** Scene Setup **********************
   const canvas = document.querySelector("#c");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.autoClear = false;
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setAnimationLoop(animate);
-  renderer.xr.enabled = true;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1;
-
-  document.body.appendChild(VRButton.createButton(renderer));
 
   const scene = new THREE.Scene();
 
   const camera = new THREE.PerspectiveCamera(
     65,
-    window.innerWidth / window.innerHeight,
+    2, //window.innerWidth / window.innerHeight,
     0.01,
     100
   );
   camera.position.y = 1.7;
   camera.position.z = 2;
 
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 1.5, -4);
-  controls.update();
+  const params = new URL(document.location).searchParams;
+  const allowvr = params.get("allowvr") === "true";
+  if (allowvr) {
+    renderer.xr.enabled = true;
+    renderer.autoClear = false;
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(VRButton.createButton(renderer));
+    document.querySelector("#vr").style.display = "none";
+  } else {
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.5, -4);
+    controls.update();
+    document.querySelector("#nonvr").style.display = "none";
+  }
 
   const roomWidth = 6;
   const roomHeight = 4;
@@ -269,102 +273,143 @@ function main() {
 
   // ********************** GUI **********************
 
-  // function changeMaterials(value) {
-  //   let oldWhiteMtl = currentWhiteMtl;
-  //   let oldCornelBoxMtl = currentCornelBoxMtl;
-  //   if (value) {
-  //     currentWhiteMtl = whitePhyscalMtl;
-  //     currentCornelBoxMtl = cornellBoxPhysicalMtls;
-  //   } else {
-  //     currentWhiteMtl = whiteLmbrtMtl;
-  //     currentCornelBoxMtl = cornellBoxLmbrMtls;
-  //   }
+  function changeMaterials(value) {
+    let oldBlackLmbrtMtl = currentBlackLmbrtMtl;
+    let oldWhiteLmbrtMtl = currentWhiteLmbrtMtl;
+    let oldCornelBoxMtl = currentCornelBoxMtl;
+    if (value) {
+      currentBlackLmbrtMtl = blackPhysicalMtl;
+      currentWhiteLmbrtMtl = whitePhysicalMtl;
+      currentCornelBoxMtl = cornellBoxPhysicalMtls;
+    } else {
+      currentBlackLmbrtMtl = blackLmbrtMtl;
+      currentWhiteLmbrtMtl = whiteLmbrtMtl;
+      currentCornelBoxMtl = cornellBoxLmbrMtls;
+    }
 
-  //   scene.traverse((obj) => {
-  //     if (obj.isMesh) {
-  //       if (obj.material === oldWhiteMtl) {
-  //         obj.material = currentWhiteMtl;
-  //       } else if (obj.material === oldCornelBoxMtl) {
-  //         obj.material = currentCornelBoxMtl;
-  //       }
-  //     }
-  //   });
-  // }
+    scene.traverse((obj) => {
+      if (obj.isMesh) {
+        if (obj.material === oldBlackLmbrtMtl) {
+          obj.material = currentBlackLmbrtMtl;
+        } else if (obj.material === oldWhiteLmbrtMtl) {
+          obj.material = currentWhiteLmbrtMtl;
+        } else if (obj.material === oldCornelBoxMtl) {
+          obj.material = currentCornelBoxMtl;
+        }
+      }
+    });
 
-  // function changeHelperVisibility(value) {
-  //   greenHelper.visible = value;
-  //   redHelper.visible = value;
-  // }
+    guiOptions.adaptMaterials = !guiOptions.adaptMaterials;
+  }
 
-  // function changeIntensity(value) {
-  //   greenLight.intensity = value;
-  //   redLight.intensity = value;
-  // }
+  function changeHelperVisibility(value) {
+    greenHelper.visible = value;
+    redHelper.visible = value;
 
-  // let currentWhiteMtl = whiteLmbrtMtl;
-  // let currentCornelBoxMtl = cornellBoxLmbrMtls;
+    guiOptions.visibleHelper = !guiOptions.visibleHelper;
+  }
 
-  // const guiOptions = {
-  //   adaptMaterials: true,
-  //   visibleHelper: false,
-  //   intensity: intensity,
-  // };
+  function changeIntensity(value) {
+    greenLight.intensity = value;
+    redLight.intensity = value;
+  }
 
-  // const gui = new GUI();
+  let currentBlackLmbrtMtl = blackLmbrtMtl;
+  let currentWhiteLmbrtMtl = whiteLmbrtMtl;
+  let currentCornelBoxMtl = cornellBoxLmbrMtls;
+
+  const guiOptions = {
+    adaptMaterials: true,
+    visibleHelper: false,
+    intensity: intensity,
+  };
+
+  const gui = new GUI();
   // gui
   //   .add(guiOptions, "adaptMaterials")
-  //   .onChange(changeMaterials)
+  //   .onChange((value) => {
+  //     // if (isUpdating) return;
+
+  //     // isUpdating = true;
+  //     console.log("Checkbox changed:", value);
+  //     changeMaterials(value);
+
+  //     // setTimeout(() => {
+  //     //   isUpdating = false;
+  //     // }, 100); // Increase the debounce time
+  //   })
+  //   // .onFinishChange((value) => {
+  //   //   console.log("Checkbox changed once:", value);
+  //   //   changeMaterials(value);
+  //   // })
   //   .name("Physical instead of Lambertian material");
   // gui.add(guiOptions, "visibleHelper").onChange(changeHelperVisibility);
-  // gui.add(guiOptions, "intensity", 0, 5, 0.01).onChange(changeIntensity);
-  // gui.domElement.style.visibility = "hidden";
+  gui
+    .add({ Change: () => changeMaterials(guiOptions.adaptMaterials) }, "Change")
+    .name("Enable/Disable Physical Material");
+  gui
+    .add(
+      { Change: () => changeHelperVisibility(guiOptions.visibleHelper) },
+      "Change"
+    )
+    .name("Enable/Disable Helper");
+  gui.add(guiOptions, "intensity", 0, 5, 0.01).onChange(changeIntensity);
 
-  // changeMaterials(guiOptions.adaptMaterials);
-  // changeHelperVisibility(guiOptions.visibleHelper);
+  changeMaterials(guiOptions.adaptMaterials);
+  changeHelperVisibility(guiOptions.visibleHelper);
 
-  // const geometry = new THREE.BufferGeometry();
-  // geometry.setFromPoints([
-  //   new THREE.Vector3(0, 0, 0),
-  //   new THREE.Vector3(0, 0, -5),
-  // ]);
+  if (allowvr) {
+    gui.domElement.style.visibility = "hidden";
+    const geometry = new THREE.BufferGeometry();
+    geometry.setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0, -5),
+    ]);
 
-  // const controller1 = renderer.xr.getController(0);
-  // controller1.add(new THREE.Line(geometry));
-  // scene.add(controller1);
+    // Draw ray from controllers
+    const controller1 = renderer.xr.getController(0);
+    controller1.add(new THREE.Line(geometry));
+    scene.add(controller1);
 
-  // const controller2 = renderer.xr.getController(1);
-  // controller2.add(new THREE.Line(geometry));
-  // scene.add(controller2);
+    const controller2 = renderer.xr.getController(1);
+    controller2.add(new THREE.Line(geometry));
+    scene.add(controller2);
 
-  // //
+    const controllerModelFactory = new XRControllerModelFactory();
 
-  // const controllerModelFactory = new XRControllerModelFactory();
+    // Draw controllers
+    const controllerGrip1 = renderer.xr.getControllerGrip(0);
+    controllerGrip1.add(
+      controllerModelFactory.createControllerModel(controllerGrip1)
+    );
+    scene.add(controllerGrip1);
 
-  // const controllerGrip1 = renderer.xr.getControllerGrip(0);
-  // controllerGrip1.add(
-  //   controllerModelFactory.createControllerModel(controllerGrip1)
-  // );
-  // scene.add(controllerGrip1);
+    const controllerGrip2 = renderer.xr.getControllerGrip(1);
+    controllerGrip2.add(
+      controllerModelFactory.createControllerModel(controllerGrip2)
+    );
+    scene.add(controllerGrip2);
 
-  // const controllerGrip2 = renderer.xr.getControllerGrip(1);
-  // controllerGrip2.add(
-  //   controllerModelFactory.createControllerModel(controllerGrip2)
-  // );
-  // scene.add(controllerGrip2);
+    // Event listeners for controllers
+    const group = new InteractiveGroup();
+    group.listenToPointerEvents(renderer, camera);
+    group.listenToXRControllerEvents(controller1);
+    group.listenToXRControllerEvents(controller2);
+    scene.add(group);
 
-  // const group = new InteractiveGroup();
-  // group.listenToPointerEvents(renderer, camera);
-  // group.listenToXRControllerEvents(controller1);
-  // group.listenToXRControllerEvents(controller2);
-  // scene.add(group);
+    gui.domElement.addEventListener("click", (e) => {
+      console.log("Clicked GUI element:", e.target);
+    });
 
-  // const mesh = new HTMLMesh(gui.domElement);
-  // mesh.position.x = -0.75;
-  // mesh.position.y = 1;
-  // mesh.position.z = -0.5;
-  // mesh.rotation.y = Math.PI / 4;
-  // mesh.scale.setScalar(2);
-  // group.add(mesh);
+    // 3D gui
+    const mesh = new HTMLMesh(gui.domElement);
+    mesh.position.x = -1.2;
+    mesh.position.y = 1.6;
+    mesh.position.z = -1.5;
+    mesh.rotation.y = Math.PI / 4;
+    mesh.scale.setScalar(4);
+    group.add(mesh);
+  }
 
   // let stats, statsMesh;
 
@@ -401,10 +446,7 @@ function main() {
     }
 
     renderer.render(scene, camera);
-    requestAnimationFrame(animate);
   }
-
-  requestAnimationFrame(animate);
 }
 
 main();
