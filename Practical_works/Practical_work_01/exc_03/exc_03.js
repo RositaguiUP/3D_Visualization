@@ -24,7 +24,7 @@ function main() {
   scene.background = new THREE.Color(0x333333);
 
   const camera = new THREE.PerspectiveCamera(75, 2, 0.1, 1000);
-  camera.position.z = 2;
+  camera.position.z = 5;
 
   var controls = new OrbitControls(camera, renderer.domElement);
   controls.listenToKeyEvents(window); // optional
@@ -184,7 +184,7 @@ function main() {
   geometry.setIndex(allIndices);
 
   const loader = new THREE.TextureLoader();
-  const texture = loader.load("/Practical_work_01/public/images/grenouille.jpg");
+  const texture = loader.load("../public/images/grenouille.jpg");
 
   const cubes = [
     makeInstance(scene, texture, geometry, 0x00ff00, 0),

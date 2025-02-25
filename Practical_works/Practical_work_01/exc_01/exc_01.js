@@ -331,7 +331,7 @@ function main() {
 
       async function doit() {
         const font = await loadFont(
-          "/Practical_work_01/public/fonts/helvetiker_regular.typeface.json"
+          "../public/fonts/helvetiker_regular.typeface.json"
         );
         const geometry = new TextGeometry("three.js", {
           font: font,
